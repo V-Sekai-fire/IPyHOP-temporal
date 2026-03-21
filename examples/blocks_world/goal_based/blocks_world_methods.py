@@ -8,8 +8,8 @@ in which the first argument is the class instance). The rest of the arguments mu
 task that the method is for. For example, the task ('get', b1) has a method "tm_get(state, b1)", as shown below.
 """
 
-from ipyhop import Methods
 from examples.blocks_world.task_based.blocks_world_methods_1 import status
+from ipyhop import Methods
 
 
 # ******************************************        Helper Functions        ****************************************** #
@@ -29,18 +29,18 @@ def mgm_move_blocks(state, multigoal):
     """
     for b1 in all_clear_blocks(state):
         s = status(b1, state, multigoal)
-        if s == 'move-to-block':
+        if s == "move-to-block":
             b2 = multigoal.pos[b1]
-            return [('pos', b1, b2), multigoal]
-        elif s == 'move-to-table':
-            return [('pos', b1, 'table'), multigoal]
+            return [("pos", b1, b2), multigoal]
+        elif s == "move-to-table":
+            return [("pos", b1, "table"), multigoal]
         else:
             continue
     #
     # if we get here, no blocks can be moved to their final locations
     for b1 in all_clear_blocks(state):
-        if status(b1, state, multigoal) == 'waiting':
-            return [('pos', b1, 'table'), multigoal]
+        if status(b1, state, multigoal) == "waiting":
+            return [("pos", b1, "table"), multigoal]
     #
     # if we get here, there are no blocks that need moving
     return []
@@ -60,9 +60,9 @@ def gm_move1(state, b1, b2):
     If goal is ('pos',b1,b2), b1 is clear, we're holding nothing, and b2 is
     either the table or clear, then assert goals to get b1 and put it on b2.
     """
-    if b2 != 'hand' and state.clear[b1] and state.holding['hand'] == False:
-        if b2 == 'table' or state.clear[b2]:
-            return [('pos', b1, 'hand'), ('pos', b1, b2)]
+    if b2 != "hand" and state.clear[b1] and state.holding["hand"] == False:
+        if b2 == "table" or state.clear[b2]:
+            return [("pos", b1, "hand"), ("pos", b1, b2)]
 
 
 def gm_get(state, b1, b2):
@@ -70,11 +70,11 @@ def gm_get(state, b1, b2):
     If goal is ('pos',b1,b2='hand') and b is clear and we're holding nothing
     Generate either a pickup or an unstack subtask for b1.
     """
-    if b2 == 'hand' and state.clear[b1] and state.holding['hand'] == False:
-        if state.pos[b1] == 'table':
-            return [('a_pickup', b1)]
+    if b2 == "hand" and state.clear[b1] and state.holding["hand"] == False:
+        if state.pos[b1] == "table":
+            return [("a_pickup", b1)]
         else:
-            return [('a_unstack', b1, state.pos[b1])]
+            return [("a_unstack", b1, state.pos[b1])]
 
 
 def gm_put(state, b1, b2):
@@ -83,17 +83,17 @@ def gm_put(state, b1, b2):
     Generate either a putdown or a stack subtask for b1.
     b2 is b1's destination: either the table or another block.
     """
-    if b2 != 'hand' and state.pos[b1] == 'hand':
-        if b2 == 'table':
-            return [('a_putdown', b1)]
+    if b2 != "hand" and state.pos[b1] == "hand":
+        if b2 == "table":
+            return [("a_putdown", b1)]
         elif state.clear[b2]:
-            return [('a_stack', b1, b2)]
+            return [("a_stack", b1, b2)]
 
 
-methods.declare_goal_methods('pos', [gm_move1, gm_get, gm_put])
+methods.declare_goal_methods("pos", [gm_move1, gm_get, gm_put])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Blocks World Mehthods isn't implemented.")
 
 """

@@ -4,9 +4,8 @@ File Description: File used for definition of plan plotting functions.
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from networkx import draw_planar, dfs_preorder_nodes
 from matplotlib import pyplot as plt
-from networkx import DiGraph
+from networkx import DiGraph, dfs_preorder_nodes, draw_planar
 
 
 # ****************************************        Function Declaration        **************************************** #
@@ -27,26 +26,26 @@ def planar_plot(graph: DiGraph, root_node: int = 0):
     n_lbls = {}
     label_stx = "<%d>: [%d]: %s"
     for i, node in enumerate(node_list):
-        n_lbls[node] = label_stx % (i, node, repr(graph.nodes[node]['info']))
+        n_lbls[node] = label_stx % (i, node, repr(graph.nodes[node]["info"]))
 
     for node in sub_graph:
-        if graph.nodes[node]['type'] == 'D':
-            n_col.append('red')
+        if graph.nodes[node]["type"] == "D":
+            n_col.append("red")
             n_sz.append(200)
-        elif graph.nodes[node]['type'] == 'T':
-            n_col.append('blue')
+        elif graph.nodes[node]["type"] == "T":
+            n_col.append("blue")
             n_sz.append(100)
-        elif graph.nodes[node]['type'] == 'G':
-            n_col.append('orange')
+        elif graph.nodes[node]["type"] == "G":
+            n_col.append("orange")
             n_sz.append(100)
-        elif graph.nodes[node]['type'] == 'M':
-            n_col.append('chocolate')
+        elif graph.nodes[node]["type"] == "M":
+            n_col.append("chocolate")
             n_sz.append(100)
-        elif graph.nodes[node]['type'] == 'A':
-            n_col.append('green')
+        elif graph.nodes[node]["type"] == "A":
+            n_col.append("green")
             n_sz.append(50)
-        elif graph.nodes[node]['type'] == 'VG' or graph.nodes[node]['type'] == 'VM':
-            n_col.append('gray')
+        elif graph.nodes[node]["type"] == "VG" or graph.nodes[node]["type"] == "VM":
+            n_col.append("gray")
             n_sz.append(30)
         else:
             raise ValueError("Invalid Node Encountered.")
@@ -56,7 +55,7 @@ def planar_plot(graph: DiGraph, root_node: int = 0):
 
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for plotter isn't implemented.")
 
 """
