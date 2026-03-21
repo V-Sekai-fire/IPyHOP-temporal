@@ -28,3 +28,4 @@ temp??.*
 
 # uv files (uv.lock should be committed for reproducible builds)
 # .python-version can be committed or ignored based on project preference
+/.hypothesis

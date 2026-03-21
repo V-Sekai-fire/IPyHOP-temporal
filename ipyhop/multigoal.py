@@ -9,7 +9,7 @@ from typing import Union
 
 
 # ******************************************    Class Declaration Start     ****************************************** #
-class MultiGoal(object):
+class MultiGoal:
     """
     A MultiGoal is just a collection of variable bindings.
 
@@ -55,12 +55,12 @@ class MultiGoal(object):
 
 # ******************************************    Class Declaration End       ****************************************** #
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Test instantiation of MultiGoal class ...")
-    test_goal = MultiGoal('test_goal')
-    test_goal.test_var_1 = {'key1': 'val1'}
-    test_goal.test_var_2 = {'key1': 0}
-    test_goal.test_var_3 = {'key2': {'key3': 5}, 'key3': {'key2': 5}}
+    test_goal = MultiGoal("test_goal")
+    test_goal.test_var_1 = {"key1": "val1"}
+    test_goal.test_var_2 = {"key1": 0}
+    test_goal.test_var_3 = {"key2": {"key3": 5}, "key3": {"key2": 5}}
     print(test_goal)
 
 """

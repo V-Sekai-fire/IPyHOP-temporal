@@ -4,14 +4,16 @@ File Description: File used for definition of monte-carlo plan executor
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from typing import List, Union, Tuple
-from ipyhop.state import State
-from ipyhop.actions import Actions
+from typing import List, Tuple, Union
+
 import numpy as np
+
+from ipyhop.actions import Actions
+from ipyhop.state import State
 
 
 # ******************************************    Class Declaration Start     ****************************************** #
-class MonteCarloExecutor(object):
+class MonteCarloExecutor:
     def __init__(self, actions: Actions, seed: int = 10):
         self.actions = actions
         self.exec_list = None
@@ -41,7 +43,7 @@ class MonteCarloExecutor(object):
 
 # ******************************************    Class Declaration End       ****************************************** #
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for MonteCarloExecutor isn't implemented.")
 
 """

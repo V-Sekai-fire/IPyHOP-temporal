@@ -4,12 +4,11 @@ File Description: File used for definition of Methods Class.
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from __future__ import print_function, division
-from typing import List, Callable, Union, Any
+from typing import Any, Callable, Dict, List, Union
 
 
 # ******************************************    Class Declaration Start     ****************************************** #
-class Methods(object):
+class Methods:
     """
     A class to store all the methods defined for all the tasks in a planning domain.
 
@@ -33,18 +32,20 @@ class Methods(object):
         self.task_method_dict = dict()
         self.goal_method_dict = dict()
         self.multigoal_method_dict = {None: []}
+        self.goal_capabilities = dict()  # Maps goal names to required capabilities
+        self.task_capabilities = dict()  # Maps task names to required capabilities
 
     # ******************************        Class Method Declaration        ****************************************** #
     def __str__(self):
-        m_str = '\n\r{:<30}{}'.format('TASK:', 'METHODS:')
+        m_str = "\n\r{:<30}{}".format("TASK:", "METHODS:")
         for task in self.task_method_dict:
-            m_str += '\n{:<30}'.format(task) + ', '.join([f.__name__ for f in self.task_method_dict[task]])
-        m_str += '\n\n\r{:<30}{}'.format('GOAL:', 'METHODS:')
+            m_str += f"\n{task:<30}" + ", ".join([f.__name__ for f in self.task_method_dict[task]])
+        m_str += "\n\n\r{:<30}{}".format("GOAL:", "METHODS:")
         for goal in self.goal_method_dict:
-            m_str += '\n{:<30}'.format(goal) + ', '.join([f.__name__ for f in self.goal_method_dict[goal]])
-        m_str += '\n\n\r{:<30}{}'.format('MULTIGOAL:', 'METHODS:')
+            m_str += f"\n{goal:<30}" + ", ".join([f.__name__ for f in self.goal_method_dict[goal]])
+        m_str += "\n\n\r{:<30}{}".format("MULTIGOAL:", "METHODS:")
         for mgoal in self.multigoal_method_dict:
-            m_str += '\n{:<30}'.format(str(mgoal)) + ', '.join([f.__name__ for f in self.multigoal_method_dict[mgoal]])
+            m_str += f"\n{str(mgoal):<30}" + ", ".join([f.__name__ for f in self.multigoal_method_dict[mgoal]])
         return m_str
 
     # ******************************        Class Method Declaration        ****************************************** #
@@ -63,8 +64,8 @@ class Methods(object):
         :param task_name: Name of the task.
         :param method_list: List of method functions.
         """
-        assert type(task_name) == str, "task_name must be a string."
-        assert type(method_list) == list, "method_list must be a list."
+        assert isinstance(task_name, str), "task_name must be a string."
+        assert isinstance(method_list, list), "method_list must be a list."
         for method in method_list:
             assert callable(method), "method in method_list should be callable."
         self.task_method_dict.update({task_name: method_list})
@@ -79,8 +80,8 @@ class Methods(object):
         :param goal_name: Name of the gal.
         :param method_list: List of method functions.
         """
-        assert type(goal_name) == str, "goal must be a string."
-        assert type(method_list) == list, "method_list must be a list."
+        assert isinstance(goal_name, str), "goal must be a string."
+        assert isinstance(method_list, list), "method_list must be a list."
         for method in method_list:
             assert callable(method), "method in method_list should be callable."
         self.goal_method_dict.update({goal_name: method_list})
@@ -95,14 +96,61 @@ class Methods(object):
         :param multigoal_tag: Optional tag for the multigoal.
         :param method_list: List of method functions.
         """
-        assert type(multigoal_tag) == str or type(multigoal_tag) == type(None), "multigoal_tag must be a string or None"
-        assert type(method_list) == list, "method_list must be a list."
+        assert isinstance(multigoal_tag, (str, type(None))), "multigoal_tag must be a string or None"
+        assert isinstance(method_list, list), "method_list must be a list."
         for method in method_list:
             assert callable(method), "method in method_list should be callable."
         self.multigoal_method_dict.update({multigoal_tag: method_list})
 
+    # ******************************        Entity-Capability Integration        ****************************************** #
+    def declare_goal_capabilities(self, goal_capability_dict: Dict[str, List[str]]):
+        """
+        Declare required capabilities for goals.
+
+        This allows goals to require specific capabilities from entities that achieve them.
+
+        :param goal_capability_dict: Dict mapping goal names to required capability lists
+
+        Example:
+            methods.declare_goal_capabilities({
+                'detect_object': ['sense'],
+                'manipulate': ['hands', 'strength']
+            })
+        """
+        self.goal_capabilities.update(goal_capability_dict)
+
+    # ******************************        Class Method Declaration        ****************************************** #
+    def declare_task_capabilities(self, task_capability_dict: Dict[str, List[str]]):
+        """
+        Declare required capabilities for tasks.
+
+        :param task_capability_dict: Dict mapping task names to required capability lists
+        """
+        self.task_capabilities.update(task_capability_dict)
+
+    # ******************************        Class Method Declaration        ****************************************** #
+    def get_goal_capabilities(self, goal_name: str) -> List[str]:
+        """
+        Get the required capabilities for a goal.
+
+        :param goal_name: Name of the goal
+        :return: List of required capabilities, or empty list if none specified
+        """
+        return self.goal_capabilities.get(goal_name, [])
+
+    # ******************************        Class Method Declaration        ****************************************** #
+    def get_task_capabilities(self, task_name: str) -> List[str]:
+        """
+        Get the required capabilities for a task.
+
+        :param task_name: Name of the task
+        :return: List of required capabilities, or empty list if none specified
+        """
+        return self.task_capabilities.get(task_name, [])
+
 
 # ******************************************    Class Declaration End       ****************************************** #
+
 
 # **************************************        Function Declaration        ****************************************** #
 def _goals_not_achieved(state, multigoal):
@@ -122,7 +170,7 @@ def _goals_not_achieved(state, multigoal):
     """
     unachieved = {}
     for name in vars(multigoal):
-        if name == '__name__' or name == 'goal_tag':
+        if name == "__name__" or name == "goal_tag":
             continue
         for arg in vars(multigoal).get(name):
             val = vars(multigoal).get(name).get(arg)
@@ -168,21 +216,26 @@ def mgm_split_multigoal(state, multigoal):
 
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
-    def test_method_1(): return False
-    def test_method_2(): return False
-    def test_method_3(): return False
+if __name__ == "__main__":
 
+    def test_method_1():
+        return False
+
+    def test_method_2():
+        return False
+
+    def test_method_3():
+        return False
 
     print("Test instantiation of Methods class ...")
     methods = Methods()
-    methods.declare_task_methods('test_task_1', [test_method_1])
-    methods.declare_task_methods('test_task_2', [test_method_2, test_method_3])
+    methods.declare_task_methods("test_task_1", [test_method_1])
+    methods.declare_task_methods("test_task_2", [test_method_2, test_method_3])
 
-    methods.declare_goal_methods('goal_1', [test_method_1, test_method_2])
+    methods.declare_goal_methods("goal_1", [test_method_1, test_method_2])
 
     methods.declare_multigoal_methods(None, [test_method_1, test_method_2, test_method_3])
-    methods.declare_multigoal_methods('mg_1', [test_method_1, test_method_3])
+    methods.declare_multigoal_methods("mg_1", [test_method_1, test_method_3])
 
     print(methods)
 

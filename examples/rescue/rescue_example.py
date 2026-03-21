@@ -4,10 +4,9 @@ File Description: Rescue example file. Run this file to solve the Rescue plannin
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from __future__ import print_function
-from examples.rescue.domain.rescue_methods import methods
 from examples.rescue.domain.rescue_actions import actions
-from examples.rescue.problem.rescue_problem_1 import init_state, task_list_1, task_list_2
+from examples.rescue.domain.rescue_methods import methods
+from examples.rescue.problem.rescue_problem_1 import init_state, task_list_2
 from ipyhop import IPyHOP, MonteCarloExecutor, planar_plot
 
 
@@ -22,26 +21,27 @@ def main():
 
     planar_plot(graph, root_node=0)
 
-    print('Plan: ')
+    print("Plan: ")
     for action in plan:
-        print('\t', action)
+        print("\t", action)
 
     executor = MonteCarloExecutor(actions, seed=10)
     exec_dict = dict()
-    ed = exec_dict[1] = {'exec': [], 'stat': []}
-    ed['exec'].append(executor.execute(init_state, plan))
-    ed['stat'].append((len(planner.sol_tree.nodes), len(plan), planner.iterations))
+    ed = exec_dict[1] = {"exec": [], "stat": []}
+    ed["exec"].append(executor.execute(init_state, plan))
+    ed["stat"].append((len(planner.sol_tree.nodes), len(plan), planner.iterations))
     print(ed)
-    print(ed['exec'][-1][-1][1])
+    print(ed["exec"][-1][-1][1])
+
 
 # ******************************************        Main Program End        ****************************************** #
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
-        print('\nFile executed successfully!\n')
+        print("\nFile executed successfully!\n")
     except KeyboardInterrupt:
-        print('\nProcess interrupted by user. Bye!')
+        print("\nProcess interrupted by user. Bye!")
 
 """
 Author(s): Yash Bansod

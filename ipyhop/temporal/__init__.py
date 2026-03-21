@@ -14,11 +14,11 @@ except ImportError:
 
 try:
     from ipyhop.temporal.utils import (
-        parse_iso8601_duration,
-        format_iso8601_duration,
         add_duration_to_datetime,
         calculate_end_time,
-        duration_to_seconds
+        duration_to_seconds,
+        format_iso8601_duration,
+        parse_iso8601_duration,
     )
 except ImportError:
     parse_iso8601_duration = None
@@ -28,11 +28,10 @@ except ImportError:
     duration_to_seconds = None
 
 __all__ = [
-    'STN',
-    'parse_iso8601_duration',
-    'format_iso8601_duration',
-    'add_duration_to_datetime',
-    'calculate_end_time',
-    'duration_to_seconds'
+    "STN",
+    "parse_iso8601_duration",
+    "format_iso8601_duration",
+    "add_duration_to_datetime",
+    "calculate_end_time",
+    "duration_to_seconds",
 ]
-
