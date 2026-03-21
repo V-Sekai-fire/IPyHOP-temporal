@@ -19,7 +19,7 @@ except ImportError:
 from ipyhop.actions import Actions
 from ipyhop.capabilities import EntityCapabilities
 from ipyhop.methods import Methods, mgm_split_multigoal
-from ipyhop.mulitgoal import MultiGoal
+from ipyhop.multigoal import MultiGoal
 from ipyhop.planner import IPyHOP
 from ipyhop.plotter import planar_plot
 from ipyhop.state import State
