@@ -10,7 +10,6 @@ task that the method is for. For example, the task ('get', b1) has a method "tm_
 
 from ipyhop import Methods, mgm_split_multigoal
 
-
 # ******************************************        Method Definitions        **************************************** #
 # Create a IPyHOP Methods object. A Methods object stores all the methods defined for the planning domain.
 methods = Methods()
@@ -22,21 +21,21 @@ def gm_move1(state, b1, b2):
     If goal is ('pos',b1,b2) and we're holding nothing,
     then assert goals to get b1 and put it on b2.
     """
-    if b2 != 'hand' and not state.holding['hand']:
-        if b2 == 'table':
-            return [('clear', b1, True), ('pos', b1, 'hand'), ('pos', b1, b2)]
+    if b2 != "hand" and not state.holding["hand"]:
+        if b2 == "table":
+            return [("clear", b1, True), ("pos", b1, "hand"), ("pos", b1, b2)]
         else:
-            return [('clear', b2, True), ('clear', b1, True), ('pos', b1, 'hand'), ('pos', b1, b2)]
+            return [("clear", b2, True), ("clear", b1, True), ("pos", b1, "hand"), ("pos", b1, b2)]
 
 
 def gm_make_clear(state, b2, truth):
     if truth == True:
-        if b2 == 'table' or state.clear[b2]:
+        if b2 == "table" or state.clear[b2]:
             return []
         else:
             above_b2 = [b1 for b1 in state.pos if state.pos[b1] == b2]
             b1 = above_b2[0]  # the block that's on b2
-            return [('clear', b1, True), ('pos', b1, 'table')]
+            return [("clear", b1, True), ("pos", b1, "table")]
 
 
 def gm_hold(state, b1, hand):
@@ -44,11 +43,11 @@ def gm_hold(state, b1, hand):
     If goal is ('pos',b1,'hand') and b1 is clear and we're holding nothing
     Generate either a pickup or an unstack subtask for b1.
     """
-    if hand == 'hand' and state.clear[b1] and state.holding[hand] == False:
-        if state.pos[b1] == 'table':
-            return [('a_pickup', b1)]
+    if hand == "hand" and state.clear[b1] and state.holding[hand] == False:
+        if state.pos[b1] == "table":
+            return [("a_pickup", b1)]
         else:
-            return [('a_unstack', b1, state.pos[b1])]
+            return [("a_unstack", b1, state.pos[b1])]
 
 
 def gm_put(state, b1, b2):
@@ -57,18 +56,18 @@ def gm_put(state, b1, b2):
     Generate either a putdown or a stack subtask for b1.
     b2 is b1's destination: either the table or another block.
     """
-    if b2 != 'hand' and state.pos[b1] == 'hand':
-        if b2 == 'table':
-            return [('a_putdown', b1)]
+    if b2 != "hand" and state.pos[b1] == "hand":
+        if b2 == "table":
+            return [("a_putdown", b1)]
         elif state.clear[b2]:
-            return [('a_stack', b1, b2)]
+            return [("a_stack", b1, b2)]
 
 
-methods.declare_goal_methods('pos', [gm_move1, gm_hold, gm_put])
-methods.declare_goal_methods('clear', [gm_make_clear])
+methods.declare_goal_methods("pos", [gm_move1, gm_hold, gm_put])
+methods.declare_goal_methods("clear", [gm_make_clear])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Blocks World Mehthods isn't implemented.")
 
 """

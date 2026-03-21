@@ -6,7 +6,6 @@ File Description: Test state models. This dummy statesample_test_3.py definition
 # ******************************************    Libraries to be imported    ****************************************** #
 from ipyhop import State
 
-
 init_state_1 = State("init_state_1")
 init_state_1.flag = {0: True}
 for i in range(1, 20):
@@ -14,7 +13,7 @@ for i in range(1, 20):
 
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for test state model isn't implemented.")
 
 """

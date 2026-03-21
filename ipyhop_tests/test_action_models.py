@@ -18,7 +18,7 @@ actions_1.declare_actions([t_a])
 
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for test action model isn't implemented.")
 
 """
