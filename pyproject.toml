@@ -38,6 +38,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "ruff>=0.1.0",
+    "hypothesis>=6.0.0",
 ]
 
 [project.urls]
@@ -73,8 +74,17 @@ select = ["E", "F", "W", "I", "N", "UP"]
 ignore = ["E501"]  # Line too long (handled by black)
 
 [tool.pytest.ini_options]
-testpaths = ["ipyhop_tests", "test_temporal.py", "test_temporal_ad_hoc.py"]
+testpaths = ["ipyhop_tests", "tests_hypothesis"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "property: marks property-based tests",
+]
 

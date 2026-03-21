@@ -149,6 +149,49 @@ class Actions(object):
         :return: True if action has temporal metadata, False otherwise
         """
         return action_name in self.action_temporal_dict
+    
+    # ******************************        Entity-Capability Integration        ****************************************** #
+    def declare_action_capabilities(self, action_capability_dict: Dict[str, List[str]]):
+        """
+        Declare required capabilities for actions.
+        
+        This allows actions to require specific capabilities from entities that execute them.
+        The action_capability_dict maps action names to lists of required capabilities.
+        
+        :param action_capability_dict: Dict mapping action names to required capability lists
+        
+        Example:
+            actions.declare_action_capabilities({
+                'a_fly': ['fly'],
+                'a_swim': ['swim'],
+                'a_carry_heavy': ['strength', 'hands']
+            })
+        
+        Note: This is used in conjunction with EntityCapabilities for capability-based planning.
+        """
+        self.action_capabilities = action_capability_dict
+    
+    # ******************************        Class Method Declaration        ****************************************** #
+    def get_action_capabilities(self, action_name: str) -> List[str]:
+        """
+        Get the required capabilities for an action.
+        
+        :param action_name: Name of the action
+        :return: List of required capabilities, or empty list if none specified
+        """
+        if not hasattr(self, 'action_capabilities'):
+            return []
+        return self.action_capabilities.get(action_name, [])
+    
+    # ******************************        Class Method Declaration        ****************************************** #
+    def requires_capabilities(self, action_name: str) -> bool:
+        """
+        Check if an action requires any capabilities.
+        
+        :param action_name: Name of the action
+        :return: True if action has capability requirements
+        """
+        return bool(self.get_action_capabilities(action_name))
 
 
 # ******************************************    Class Declaration End       ****************************************** #
