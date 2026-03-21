@@ -124,22 +124,39 @@ class TestTemporalUtils(unittest.TestCase):
     def test_add_duration_to_datetime(self):
         """Test adding duration to datetime."""
         result = add_duration_to_datetime("2024-01-01T00:00:00", 10)
-        self.assertEqual(result, "2024-01-01T00:00:10")
+        # Returns datetime object
+        self.assertIsInstance(result, datetime)
+        self.assertEqual(result.year, 2024)
+        self.assertEqual(result.month, 1)
+        self.assertEqual(result.day, 1)
+        self.assertEqual(result.hour, 0)
+        self.assertEqual(result.minute, 0)
+        self.assertEqual(result.second, 10)
     
     def test_add_duration_to_datetime_with_iso_duration(self):
         """Test adding ISO duration to datetime."""
         result = add_duration_to_datetime("2024-01-01T00:00:00", "PT10S")
-        self.assertEqual(result, "2024-01-01T00:00:10")
+        # Returns datetime object
+        self.assertIsInstance(result, datetime)
+        self.assertEqual(result.second, 10)
     
     def test_calculate_end_time(self):
         """Test calculating end time."""
         end_time = calculate_end_time("2024-01-01T00:00:00", 10)
-        self.assertEqual(end_time, "2024-01-01T00:00:10")
+        # Returns ISO 8601 string with Z suffix
+        self.assertEqual(end_time, "2024-01-01T00:00:10Z")
     
     def test_calculate_end_time_with_iso_duration(self):
         """Test calculating end time with ISO duration."""
         end_time = calculate_end_time("2024-01-01T00:00:00", "PT10S")
-        self.assertEqual(end_time, "2024-01-01T00:00:10")
+        self.assertEqual(end_time, "2024-01-01T00:00:10Z")
+    
+    def test_format_iso8601_datetime(self):
+        """Test formatting datetime to ISO 8601."""
+        dt = datetime(2024, 1, 1, 12, 0, 0)
+        formatted = format_iso8601_datetime(dt)
+        # Returns string with Z suffix
+        self.assertEqual(formatted, "2024-01-01T12:00:00Z")
     
     # ==================== Current Time ====================
     

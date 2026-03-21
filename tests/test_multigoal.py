@@ -62,11 +62,10 @@ class TestMultiGoal(unittest.TestCase):
         mg2 = MultiGoal('mg2')
         mg2.loc = {'obj2': 'room2'}
         
-        # update() merges __dict__, so mg1 will have both loc dicts merged
+        # update() replaces __dict__, so mg1.loc becomes mg2.loc
         mg1.update(mg2)
-        # After update, mg1.loc should have both obj1 and obj2
-        self.assertIn('obj1', mg1.loc)
-        self.assertIn('obj2', mg1.loc)
+        # After update, mg1.loc should be replaced with mg2.loc
+        self.assertEqual(mg1.loc, {'obj2': 'room2'})
     
     def test_goal_copy(self):
         """Test copying MultiGoal."""
