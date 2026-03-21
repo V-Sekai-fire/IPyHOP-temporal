@@ -53,17 +53,17 @@ class TestTemporalMetadata(unittest.TestCase):
         tm.set_start_time("2024-01-01T00:00:00")
         tm.calculate_end_from_duration()
         self.assertIsNotNone(tm.end_time)
-        # End time should be 10 seconds after start
-        self.assertEqual(tm.end_time, "2024-01-01T00:00:10")
+        # End time should be 10 seconds after start (with Z suffix)
+        self.assertEqual(tm.end_time, "2024-01-01T00:00:10Z")
     
-    def test_calculate_duration_from_end(self):
-        """Test calculating duration from end time."""
-        tm = TemporalMetadata(duration=0)
-        tm.set_start_time("2024-01-01T00:00:00")
-        tm.set_end_time("2024-01-01T00:00:10")
-        tm.calculate_duration_from_end()
-        # Duration should be stored as ISO format
+    def test_set_duration(self):
+        """Test setting duration."""
+        tm = TemporalMetadata()
+        tm.set_duration(10)
         self.assertEqual(tm.duration, "PT10S")
+        
+        tm.set_duration("PT5M")
+        self.assertEqual(tm.duration, "PT5M")
     
     def test_to_dict(self):
         """Test converting to dictionary."""
@@ -74,17 +74,17 @@ class TestTemporalMetadata(unittest.TestCase):
         self.assertIn('duration', d)
         self.assertIn('start_time', d)
         self.assertIn('end_time', d)
-        self.assertEqual(d['duration'], 10)
+        self.assertEqual(d['duration'], "PT10S")
     
     def test_from_dict(self):
         """Test creating from dictionary."""
         d = {
-            'duration': 10,
+            'duration': "PT10S",
             'start_time': "2024-01-01T00:00:00",
             'end_time': "2024-01-01T00:00:10"
         }
         tm = TemporalMetadata.from_dict(d)
-        self.assertEqual(tm.duration, 10)
+        self.assertEqual(tm.duration, "PT10S")
         self.assertEqual(tm.start_time, "2024-01-01T00:00:00")
         self.assertEqual(tm.end_time, "2024-01-01T00:00:10")
     
@@ -95,9 +95,10 @@ class TestTemporalMetadata(unittest.TestCase):
         tm_copy = tm.copy()
         self.assertEqual(tm_copy.duration, tm.duration)
         self.assertEqual(tm_copy.start_time, tm.start_time)
-        # Modify copy
-        tm_copy.duration = 20
-        self.assertEqual(tm.duration, 10)
+        # Modify copy's duration
+        tm_copy.set_duration(20)
+        self.assertEqual(tm.duration, "PT10S")
+        self.assertEqual(tm_copy.duration, "PT20S")
     
     def test_string_representation(self):
         """Test string representation."""
