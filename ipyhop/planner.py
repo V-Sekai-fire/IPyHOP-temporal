@@ -13,7 +13,7 @@ from networkx import DiGraph, descendants, dfs_preorder_nodes, is_tree
 from ipyhop.actions import Actions
 from ipyhop.capabilities import EntityCapabilities
 from ipyhop.methods import Methods
-from ipyhop.mulitgoal import MultiGoal
+from ipyhop.multigoal import MultiGoal
 from ipyhop.state import State
 from ipyhop.temporal.utils import now_iso8601
 from ipyhop.temporal_metadata import TemporalMetadata

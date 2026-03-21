@@ -9,7 +9,7 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 
 from ipyhop.methods import Methods, _goals_not_achieved, mgm_split_multigoal
-from ipyhop.mulitgoal import MultiGoal
+from ipyhop.multigoal import MultiGoal
 from ipyhop.state import State
 
 # ============================================================================
