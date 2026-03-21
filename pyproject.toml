@@ -66,15 +66,27 @@ target-version = ['py37', 'py38', 'py39', 'py310', 'py311', 'py312']
 
 [tool.ruff]
 line-length = 120
-target-version = "py37"
+target-version = "py310"
+exclude = [
+    "examples/",
+    "tests_hypothesis/",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP"]
-ignore = ["E501"]  # Line too long (handled by black)
+# Select specific rules
+select = [
+    "E",  # pycodestyle errors
+    "F",  # Pyflakes
+    "W",  # pycodestyle warnings
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
 
 [tool.pytest.ini_options]
 testpaths = ["ipyhop_tests", "test_temporal.py", "test_temporal_ad_hoc.py"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-

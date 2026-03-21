@@ -13,24 +13,26 @@ from ipyhop import Methods
 
 # ******************************************        Helper Functions        ****************************************** #
 def is_done(b1, state, goal):
-    if b1 == 'table': return True
+    if b1 == "table":
+        return True
     if b1 in goal.pos and goal.pos[b1] != state.pos[b1]:
         return False
-    if state.pos[b1] == 'table': return True
+    if state.pos[b1] == "table":
+        return True
     return is_done(state.pos[b1], state, goal)
 
 
 def status(b1, state, goal):
     if is_done(b1, state, goal):
-        return 'done'
+        return "done"
     elif not state.clear[b1]:
-        return 'inaccessible'
-    elif not (b1 in goal.pos) or goal.pos[b1] == 'table':
-        return 'move-to-table'
+        return "inaccessible"
+    elif b1 not in goal.pos or goal.pos[b1] == "table":
+        return "move-to-table"
     elif is_done(goal.pos[b1], state, goal) and state.clear[goal.pos[b1]]:
-        return 'move-to-block'
+        return "move-to-block"
     else:
-        return 'waiting'
+        return "waiting"
 
 
 def all_blocks(state):
@@ -58,17 +60,17 @@ def tm_move_blocks(state, goal):
     """
     for b1 in all_blocks(state):
         s = status(b1, state, goal)
-        if s == 'move-to-table':
-            return [('move_one', b1, 'table'), ('move_blocks', goal)]
-        elif s == 'move-to-block':
-            return [('move_one', b1, goal.pos[b1]), ('move_blocks', goal)]
+        if s == "move-to-table":
+            return [("move_one", b1, "table"), ("move_blocks", goal)]
+        elif s == "move-to-block":
+            return [("move_one", b1, goal.pos[b1]), ("move_blocks", goal)]
         else:
             continue
     #
     # if we get here, no blocks can be moved to their final locations
-    b1 = find_if(lambda x: status(x, state, goal) == 'waiting', all_blocks(state))
+    b1 = find_if(lambda x: status(x, state, goal) == "waiting", all_blocks(state))
     if b1 is not None:
-        return [('move_one', b1, 'table'), ('move_blocks', goal)]
+        return [("move_one", b1, "table"), ("move_blocks", goal)]
     #
     # if we get here, there are no blocks that need moving
     return []
@@ -80,17 +82,17 @@ methods = Methods()
 # declare_task_methods must be called once for each task name.
 # Below, 'declare_task_methods('move_blocks', [tm_move_blocks])' tells IPyHOP that 'move_blocks' has one method,
 # tm_move_blocks. Notice that 'move_blocks' is a quoted string, and tm_move_blocks is the actual function.
-methods.declare_task_methods('move_blocks', [tm_move_blocks])
+methods.declare_task_methods("move_blocks", [tm_move_blocks])
 
 
 def tm_move1(state, b1, dest):
     """
     Generate subtasks to get b1 and put it at dest.
     """
-    return [('get', b1), ('put', b1, dest)]
+    return [("get", b1), ("put", b1, dest)]
 
 
-methods.declare_task_methods('move_one', [tm_move1])
+methods.declare_task_methods("move_one", [tm_move1])
 
 
 def tm_get(state, b1):
@@ -98,30 +100,30 @@ def tm_get(state, b1):
     Generate either a pickup or an unstack subtask for b1.
     """
     if state.clear[b1]:
-        if state.pos[b1] == 'table':
-            return [('a_pickup', b1)]
+        if state.pos[b1] == "table":
+            return [("a_pickup", b1)]
         else:
-            return [('a_unstack', b1, state.pos[b1])]
+            return [("a_unstack", b1, state.pos[b1])]
 
 
-methods.declare_task_methods('get', [tm_get])
+methods.declare_task_methods("get", [tm_get])
 
 
 def tm_put(state, b1, b2):
     """
     Generate either a putdown or a stack subtask for b1. b2 is b1's destination: either the table or another block.
     """
-    if state.holding['hand'] == b1:
-        if b2 == 'table':
-            return [('a_putdown', b1)]
+    if state.holding["hand"] == b1:
+        if b2 == "table":
+            return [("a_putdown", b1)]
         else:
-            return [('a_stack', b1, b2)]
+            return [("a_stack", b1, b2)]
 
 
-methods.declare_task_methods('put', [tm_put])
+methods.declare_task_methods("put", [tm_put])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Blocks World Mehthods isn't implemented.")
 
 """

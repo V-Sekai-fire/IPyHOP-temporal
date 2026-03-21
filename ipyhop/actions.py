@@ -4,14 +4,14 @@ File Description: File used for definition of Actions Class.
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from __future__ import print_function, division
-from typing import List, Callable, Union, Any, Dict, Tuple, Optional
 # Import State directly to avoid circular imports
-import sys
 import os
-_state_path = os.path.join(os.path.dirname(__file__), 'state.py')
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+_state_path = os.path.join(os.path.dirname(__file__), "state.py")
 if os.path.exists(_state_path):
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("state_module", _state_path)
     state_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(state_module)
@@ -20,9 +20,10 @@ else:
     from ipyhop.state import State
 
 # Import TemporalMetadata directly
-_temporal_metadata_path = os.path.join(os.path.dirname(__file__), 'temporal_metadata.py')
+_temporal_metadata_path = os.path.join(os.path.dirname(__file__), "temporal_metadata.py")
 if os.path.exists(_temporal_metadata_path):
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("temporal_metadata_module", _temporal_metadata_path)
     temporal_metadata_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(temporal_metadata_module)
@@ -32,7 +33,7 @@ else:
 
 
 # ******************************************    Class Declaration Start     ****************************************** #
-class Actions(object):
+class Actions:
     """
     A class to store all the actions defined in a planning domain.
 
@@ -56,7 +57,7 @@ class Actions(object):
 
     # ******************************        Class Method Declaration        ****************************************** #
     def __str__(self):
-        a_str = '\n\rACTIONS: ' + ', '.join(self.action_dict)
+        a_str = "\n\rACTIONS: " + ", ".join(self.action_dict)
         return a_str
 
     # ******************************        Class Method Declaration        ****************************************** #
@@ -75,7 +76,7 @@ class Actions(object):
 
         :param action_list: List of actions in the
         """
-        assert type(action_list) == list, "action_list must be a list."
+        assert isinstance(action_list, list), "action_list must be a list."
         for action in action_list:
             assert callable(action), "action in action_list should be callable."
         self.action_dict.update({action.__name__: action for action in action_list})
@@ -87,22 +88,27 @@ class Actions(object):
         self.action_prob.update({action: act_prob_dict[action] for action in act_prob_dict})
         self.action_cost.update({action: act_cost_dict[action] for action in act_cost_dict})
 
-        assert(len(self.action_prob.keys()) == len(self.action_dict.keys()))
-        assert (len(self.action_cost.keys()) == len(self.action_dict.keys()))
-    
+        assert len(self.action_prob.keys()) == len(self.action_dict.keys())
+        assert len(self.action_cost.keys()) == len(self.action_dict.keys())
+
     # ******************************        Class Method Declaration        ****************************************** #
-    def declare_temporal_actions(self, temporal_action_list: List[Tuple[Union[str, Callable], Union[str, float, Callable], Optional[Union[str, float]]]]):
+    def declare_temporal_actions(
+        self,
+        temporal_action_list: List[
+            Tuple[Union[str, Callable], Union[str, float, Callable], Optional[Union[str, float]]]
+        ],
+    ):
         """
         Declare actions with temporal durations.
-        
+
         Supports two formats:
         1. List of tuples: (action_name, action_func, duration)
         2. List of tuples: (action_func, duration) - uses function name
-        
+
         :param temporal_action_list: List of (action_name_or_func, action_func_or_duration, optional_duration)
         """
-        assert type(temporal_action_list) == list, "temporal_action_list must be a list."
-        
+        assert isinstance(temporal_action_list, list), "temporal_action_list must be a list."
+
         for item in temporal_action_list:
             if len(item) == 2:
                 # Format: (action_func, duration)
@@ -125,39 +131,87 @@ class Actions(object):
                 self.action_cost[action_name] = 1.0
             else:
                 raise ValueError(f"Invalid temporal action format: {item}")
-            
+
             # Create temporal metadata
             temporal_metadata = TemporalMetadata(duration=duration)
             self.action_temporal_dict[action_name] = temporal_metadata
-    
+
     # ******************************        Class Method Declaration        ****************************************** #
     def get_temporal_metadata(self, action_name: str) -> Optional[TemporalMetadata]:
         """
         Get temporal metadata for an action.
-        
+
         :param action_name: Name of the action
         :return: TemporalMetadata or None if action has no temporal info
         """
         return self.action_temporal_dict.get(action_name)
-    
+
     # ******************************        Class Method Declaration        ****************************************** #
     def has_temporal_info(self, action_name: str) -> bool:
         """
         Check if an action has temporal information.
-        
+
         :param action_name: Name of the action
         :return: True if action has temporal metadata, False otherwise
         """
         return action_name in self.action_temporal_dict
 
+    # ******************************        Entity-Capability Integration        ****************************************** #
+    def declare_action_capabilities(self, action_capability_dict: Dict[str, List[str]]):
+        """
+        Declare required capabilities for actions.
+
+        This allows actions to require specific capabilities from entities that execute them.
+        The action_capability_dict maps action names to lists of required capabilities.
+
+        :param action_capability_dict: Dict mapping action names to required capability lists
+
+        Example:
+            actions.declare_action_capabilities({
+                'a_fly': ['fly'],
+                'a_swim': ['swim'],
+                'a_carry_heavy': ['strength', 'hands']
+            })
+
+        Note: This is used in conjunction with EntityCapabilities for capability-based planning.
+        """
+        self.action_capabilities = action_capability_dict
+
+    # ******************************        Class Method Declaration        ****************************************** #
+    def get_action_capabilities(self, action_name: str) -> List[str]:
+        """
+        Get the required capabilities for an action.
+
+        :param action_name: Name of the action
+        :return: List of required capabilities, or empty list if none specified
+        """
+        if not hasattr(self, "action_capabilities"):
+            return []
+        return self.action_capabilities.get(action_name, [])
+
+    # ******************************        Class Method Declaration        ****************************************** #
+    def requires_capabilities(self, action_name: str) -> bool:
+        """
+        Check if an action requires any capabilities.
+
+        :param action_name: Name of the action
+        :return: True if action has capability requirements
+        """
+        return bool(self.get_action_capabilities(action_name))
+
 
 # ******************************************    Class Declaration End       ****************************************** #
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
-    def test_action_1(): return False
-    def test_action_2(): return False
-    def test_action_3(): return False
+if __name__ == "__main__":
 
+    def test_action_1():
+        return False
+
+    def test_action_2():
+        return False
+
+    def test_action_3():
+        return False
 
     print("Test instantiation of Methods class ...")
     actions = Actions()

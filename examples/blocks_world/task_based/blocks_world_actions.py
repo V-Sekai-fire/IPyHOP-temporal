@@ -18,35 +18,35 @@ from ipyhop import Actions
 
 
 def a_pickup(state, b):
-    if state.pos[b] == 'table' and state.clear[b] == True and state.holding['hand'] == False:
-        state.pos[b] = 'hand'
+    if state.pos[b] == "table" and state.clear[b] == True and state.holding["hand"] == False:
+        state.pos[b] = "hand"
         state.clear[b] = False
-        state.holding['hand'] = b
+        state.holding["hand"] = b
         return state
 
 
 def a_unstack(state, b, c):
-    if state.pos[b] == c and c != 'table' and state.clear[b] == True and state.holding['hand'] == False:
-        state.pos[b] = 'hand'
+    if state.pos[b] == c and c != "table" and state.clear[b] == True and state.holding["hand"] == False:
+        state.pos[b] = "hand"
         state.clear[b] = False
-        state.holding['hand'] = b
+        state.holding["hand"] = b
         state.clear[c] = True
         return state
 
 
 def a_putdown(state, b):
-    if state.pos[b] == 'hand':
-        state.pos[b] = 'table'
+    if state.pos[b] == "hand":
+        state.pos[b] = "table"
         state.clear[b] = True
-        state.holding['hand'] = False
+        state.holding["hand"] = False
         return state
 
 
 def a_stack(state, b, c):
-    if state.pos[b] == 'hand' and state.clear[c] == True:
+    if state.pos[b] == "hand" and state.clear[c] == True:
         state.pos[b] = c
         state.clear[b] = True
-        state.holding['hand'] = False
+        state.holding["hand"] = False
         state.clear[c] = False
         return state
 
@@ -56,7 +56,7 @@ actions = Actions()
 actions.declare_actions([a_pickup, a_unstack, a_putdown, a_stack])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Blocks World Actions isn't implemented.")
 
 """

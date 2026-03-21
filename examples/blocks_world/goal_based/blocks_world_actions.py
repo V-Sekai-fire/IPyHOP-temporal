@@ -15,10 +15,11 @@ The blocks-world actions use three state variables:
 """
 
 from examples.blocks_world.task_based.blocks_world_actions import actions
+
 actions = actions
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Blocks World Actions isn't implemented.")
 
 """

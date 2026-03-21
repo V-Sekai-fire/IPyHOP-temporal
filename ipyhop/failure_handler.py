@@ -5,8 +5,9 @@ This is an old file. Kept here only for future reference. Do not use this.
 """
 
 # ******************************************    Libraries to be imported    ****************************************** #
-from networkx import DiGraph
 from typing import List, Tuple, Union
+
+from networkx import DiGraph
 
 
 # ****************************************        Function Declaration        **************************************** #
@@ -22,13 +23,13 @@ def post_failure_tasks(graph: DiGraph, fail_node: Union[int, Tuple]) -> List:
     """
     task_id_list = []
 
-    if type(fail_node) == tuple:
+    if isinstance(fail_node, tuple):
         for node in graph.nodes:
-            if graph.nodes[node]['info'] == fail_node:
+            if graph.nodes[node]["info"] == fail_node:
                 fail_node = node
                 break
-        if type(fail_node) != int:
-            raise ValueError('Could not find the fail_node in the graph.')
+        if not isinstance(fail_node, int):
+            raise ValueError("Could not find the fail_node in the graph.")
 
     # Parent of failure node.
     parent_node_list = list(graph.predecessors(fail_node))
@@ -38,18 +39,18 @@ def post_failure_tasks(graph: DiGraph, fail_node: Union[int, Tuple]) -> List:
     g_parent_node_list = list(graph.predecessors(parent_node))
     g_parent_node = g_parent_node_list[0] if len(g_parent_node_list) else None
 
-    if g_parent_node is None:     # Equivalent to if parent_node == 'root'
+    if g_parent_node is None:  # Equivalent to if parent_node == 'root'
         task_list = []
         for task_id in task_id_list:
-            task_list.append(graph.nodes[task_id]['info'])
+            task_list.append(graph.nodes[task_id]["info"])
         return task_list
     else:
         succ_list = list(graph.successors(g_parent_node))
         p_node_ind = succ_list.index(parent_node)
         # If first node in g_parent successors caused failure, add the g_parent to task list. Unless g_parent is root.
-        if not p_node_ind and graph.nodes[g_parent_node]['type'] != 'D':
+        if not p_node_ind and graph.nodes[g_parent_node]["type"] != "D":
             task_id_list.append(g_parent_node)
-        else:               # Else add the g_parent successors from the parent node.
+        else:  # Else add the g_parent successors from the parent node.
             task_id_list.extend(succ_list[p_node_ind:])
 
     while True:
@@ -60,16 +61,16 @@ def post_failure_tasks(graph: DiGraph, fail_node: Union[int, Tuple]) -> List:
         if g_parent_node is None:  # Equivalent to if parent_node == 'root'
             task_list = []
             for task_id in task_id_list:
-                task_list.append(graph.nodes[task_id]['info'])
+                task_list.append(graph.nodes[task_id]["info"])
             return task_list
         else:
             succ_list = list(graph.successors(g_parent_node))
-            succ_list = succ_list[succ_list.index(parent_node) + 1:]
+            succ_list = succ_list[succ_list.index(parent_node) + 1 :]
             task_id_list.extend(succ_list)
 
 
 # ******************************************    Demo / Test Routine         ****************************************** #
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise NotImplementedError("Test run / Demo routine for Failure Handler isn't implemented.")
 
 """

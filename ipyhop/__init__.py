@@ -16,14 +16,30 @@ except ImportError:
     # MonteCarloExecutor requires numpy, make it optional
     MonteCarloExecutor = None
 
-from ipyhop.state import State
-from ipyhop.mulitgoal import MultiGoal
-from ipyhop.methods import Methods, mgm_split_multigoal
 from ipyhop.actions import Actions
+from ipyhop.capabilities import EntityCapabilities
+from ipyhop.methods import Methods, mgm_split_multigoal
+from ipyhop.multigoal import MultiGoal
 from ipyhop.planner import IPyHOP
 from ipyhop.plotter import planar_plot
-from ipyhop.temporal_metadata import TemporalMetadata
+from ipyhop.state import State
 from ipyhop.temporal import STN
+from ipyhop.temporal_metadata import TemporalMetadata
+
+__all__ = [
+    "State",
+    "MultiGoal",
+    "Methods",
+    "mgm_split_multigoal",
+    "Actions",
+    "EntityCapabilities",
+    "IPyHOP",
+    "planar_plot",
+    "TemporalMetadata",
+    "STN",
+    "MonteCarloExecutor",
+]
+
 # from ipyhop.failure_handler import post_failure_tasks
 
 """
