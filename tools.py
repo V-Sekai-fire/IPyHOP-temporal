@@ -80,16 +80,25 @@ def _build_state(state_dict, name: str = "custom_state"):
     return s
 
 
+def _serialize_val(v):
+    """Recursively make a value JSON-safe, stringifying tuple keys in dicts."""
+    from ipyhop import State
+    if isinstance(v, State):
+        return _serialize_state(v)
+    if isinstance(v, dict):
+        return {str(dk): _serialize_val(dv) for dk, dv in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [_serialize_val(i) for i in v]
+    return v
+
+
 def _serialize_state(s) -> dict:
     """Serialize a State snapshot to a JSON-safe dict, stringifying tuple keys."""
     result = {}
     for k, v in vars(s).items():
         if k.startswith("_"):
             continue
-        if isinstance(v, dict):
-            result[k] = {str(dk): dv for dk, dv in v.items()}
-        else:
-            result[k] = v
+        result[k] = _serialize_val(v)
     return result
 
 
@@ -460,7 +469,7 @@ def handle_simulate(params: dict) -> dict:
     planner    = session["planner"]
     init_state = session["init_state"]
 
-    if not planner.sol_plan:
+    if planner.sol_plan is None:
         return {"error": "No plan in this session. Run plan_* first."}
 
     try:
