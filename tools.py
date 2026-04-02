@@ -96,7 +96,6 @@ def _serialize_val(v):
 
 def _recursive_json_parse(obj):
     """Recursively parse JSON strings in nested structures."""
-    import json
     if isinstance(obj, str):
         try:
             parsed = json.loads(obj)
@@ -194,8 +193,6 @@ def handle_blocks_world(args: dict, **kwargs) -> dict:
         from examples.blocks_world.goal_based.blocks_world_actions import actions as gb_actions
         import examples.blocks_world.task_based.blocks_world_problem as prob
         from ipyhop import IPyHOP, MultiGoal
-        import json
-
         # Parse state if it's a string (Hermes may pass JSON as string)
         state_data = _recursive_json_parse(args.get("state"))
         # Build state
@@ -439,7 +436,6 @@ def handle_replan(args: dict, **kwargs) -> dict:
     # Defensive: accept args as first positional or via kwargs
     if not isinstance(args, dict):
         # Try to parse as JSON string
-        import json
         try:
             args = json.loads(args) if isinstance(args, str) else {}
         except:
@@ -493,7 +489,6 @@ def handle_simulate(args: dict, **kwargs) -> dict:
     # Defensive: accept args as first positional or via kwargs
     if not isinstance(args, dict):
         # Try to parse as JSON string
-        import json
         try:
             args = json.loads(args) if isinstance(args, str) else {}
         except:
