@@ -37,7 +37,7 @@ def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> str:
 
         has_multigoal: bool = False
         task_list: list = []
-        if tasks_data:
+        if tasks_data is not None:
             for t in tasks_data:
                 if isinstance(t, dict) and t.get("__multigoal__"):
                     has_multigoal = True

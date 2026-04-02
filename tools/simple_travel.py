@@ -5,7 +5,7 @@ from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR,
 
 
 def handle_simple_travel(params: dict[str, Any], **kwargs: Any) -> str:
-    tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
+    tasks_raw = params.get("tasks") if params.get("tasks") is not None else [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
         return json.dumps({"error": "tasks must be a list"})
     tasks: list[tuple] = []

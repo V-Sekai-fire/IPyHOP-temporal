@@ -15,7 +15,7 @@ def handle_rescue(params: dict[str, Any], **kwargs: Any) -> str:
         state = _build_state(params["state"]) if params.get("state") else default_state
 
         tasks: list[tuple]
-        if params.get("tasks"):
+        if params.get("tasks") is not None:
             tasks = []
             for t in params["tasks"]:
                 args: list = [tuple(a) if isinstance(a, list) else a for a in t[1:]]

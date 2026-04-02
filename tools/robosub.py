@@ -17,7 +17,7 @@ def handle_robosub(params: dict[str, Any], **kwargs: Any) -> str:
         state = _build_state(params["state"]) if params.get("state") else default_state
 
         tasks: list[tuple]
-        if params.get("tasks"):
+        if params.get("tasks") is not None:
             tasks = [tuple(t) for t in params["tasks"]]
         else:
             task: str = str(params.get("task", "full")).strip()
