@@ -71,13 +71,26 @@ def _coerce_keys(obj):
     return result
 
 
-def _build_state(state_dict: dict, name: str = "custom_state"):
+def _build_state(state_dict, name: str = "custom_state"):
     """Build an IPyHOP State from a plain dict."""
     from ipyhop import State
     s = State(name)
     for key, val in state_dict.items():
         setattr(s, key, _coerce_keys(val))
     return s
+
+
+def _serialize_state(s) -> dict:
+    """Serialize a State snapshot to a JSON-safe dict, stringifying tuple keys."""
+    result = {}
+    for k, v in vars(s).items():
+        if k.startswith("_"):
+            continue
+        if isinstance(v, dict):
+            result[k] = {str(dk): dv for dk, dv in v.items()}
+        else:
+            result[k] = v
+    return result
 
 
 def _store(planner, init_state) -> str:
@@ -112,7 +125,13 @@ def handle_simple_travel(params: dict) -> dict:
       state      — optional dict override for the initial state
     """
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
-    tasks = [tuple(t) for t in tasks_raw]
+    if not isinstance(tasks_raw, list):
+        return {"error": "tasks must be a list"}
+    tasks = []
+    for item in tasks_raw:
+        if not isinstance(item, (list, tuple)) or len(item) < 2:
+            return {"error": f"each task must be [name, arg, ...], got {item!r}"}
+        tasks.append(tuple(item))
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.simple_travel.task_based.simple_travel_domain import actions, methods
@@ -350,7 +369,13 @@ def handle_temporal_travel(params: dict) -> dict:
       state — optional dict override for the initial state
     """
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
-    tasks = [tuple(t) for t in tasks_raw]
+    if not isinstance(tasks_raw, list):
+        return {"error": "tasks must be a list"}
+    tasks = []
+    for item in tasks_raw:
+        if not isinstance(item, (list, tuple)) or len(item) < 2:
+            return {"error": f"each task must be [name, arg, ...], got {item!r}"}
+        tasks.append(tuple(item))
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.temporal_travel.task_based.temporal_travel_domain import actions, methods
@@ -444,10 +469,7 @@ def handle_simulate(params: dict) -> dict:
         return {"error": f"simulate failed: {exc}"}
 
     # Render each state snapshot as a dict of its __dict__ (excluding private keys)
-    snapshots = []
-    for s in states:
-        snap = {k: v for k, v in vars(s).items() if not k.startswith("_")}
-        snapshots.append(snap)
+    snapshots = [_serialize_state(s) for s in states]
 
     plan_slice = _plan_to_json(planner.sol_plan[start_index:])
 
