@@ -260,5 +260,6 @@ _TOOLS = [
 
 
 def register(ctx):
+    plugin_name = ctx.plugin_name  # "plan", "acp", or "polymarket"
     for name, schema, handler in _TOOLS:
-        ctx.register_tool(name, schema, handler)
+        ctx.register_tool(name, plugin_name, schema, handler)
