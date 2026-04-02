@@ -1,0 +1,15 @@
+{
+  "name": "plan_sample_simple_travel",
+  "description": "Plan travel routes for people in a simple city domain. Use when you need to find a sequence of actions (walk or taxi) to move people between locations. Automatically chooses walking for short distances (<=2 units) and taxis for longer distances if cash >= fare. Returns ordered actions like [a_call_taxi, a_ride_taxi, a_pay_driver] or [a_walk]. Persons: alice ($20), bob ($15). Locations: home_a, home_b, park, station, downtown. Use for pathfinding with limited resources and multiple transport options.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "tasks": {
+        "type": "array",
+        "description": "List of [\"travel\", person, destination] tasks. Default: [[\"travel\", \"alice\", \"park\"]]",
+        "items": {"type": "array"}
+      }
+    },
+    "required": []
+  }
+}

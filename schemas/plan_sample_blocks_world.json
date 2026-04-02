@@ -1,0 +1,37 @@
+{
+  "name": "plan_sample_blocks_world",
+  "description": "Solve block-stacking puzzles using a robotic hand. Use when you need to rearrange blocks to achieve a goal configuration. Handles pickup, unstack, putdown, stack with preconditions (only clear blocks, only on clear surfaces). Returns action sequences to transform initial to goal state. Problems: 1a/1b (3 blocks), 2a/2b (4 blocks), 3 (19 blocks). Use for classical planning with physical constraints and ordering dependencies. Supports custom states and goals via state and tasks parameters for testing impossible configurations.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "problem": {
+        "type": "string",
+        "description": "Problem identifier: '1a', '1b', '2a', '2b', or '3'. Default: '1b'."
+      },
+      "state": {
+        "type": "object",
+        "description": "Custom initial state override. Format: {'pos': {block: position, ...}, 'clear': {block: bool, ...}, 'holding': {'hand': bool}}. Position can be another block or 'table'.",
+        "properties": {
+          "pos": {
+            "type": "object",
+            "description": "Map of block -> position (another block or 'table')"
+          },
+          "clear": {
+            "type": "object",
+            "description": "Map of block -> boolean (is block clear)"
+          },
+          "holding": {
+            "type": "object",
+            "description": "Map of 'hand' -> boolean (is hand holding something)"
+          }
+        }
+      },
+      "tasks": {
+        "type": "array",
+        "description": "Custom goal tasks. For MultiGoal: [{'__multigoal__': true, 'goal_tag': 'name', 'pos': {...}, 'clear': {...}, 'holding': {...}}]. For simple tasks: [['task_name', arg1, arg2], ...].",
+        "items": {}
+      }
+    },
+    "required": []
+  }
+}

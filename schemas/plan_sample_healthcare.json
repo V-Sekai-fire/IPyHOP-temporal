@@ -1,0 +1,14 @@
+{
+  "name": "plan_sample_healthcare",
+  "description": "Schedule surgical procedures in operating rooms with temporal constraints. Use when creating time-aware surgery schedules respecting room availability and equipment. Returns temporally-annotated plans with ISO-8601 timestamps (prepare PT30M, surgery PT2H, recover PT15M, clean PT20M). Rooms: OR1/OR3 (cardiac), OR2 (orthopedic). Patients: patient1/2/3. Use for scheduling where action durations matter and resources allocated over time.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "task": {
+        "type": "string",
+        "description": "Scenario: 'single' (patient1/OR1), 'two' (patient1+2), 'shared_room' (patient1+3 both cardiac). Default: 'single'."
+      }
+    },
+    "required": []
+  }
+}

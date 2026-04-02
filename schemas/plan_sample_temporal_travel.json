@@ -1,0 +1,15 @@
+{
+  "name": "plan_sample_temporal_travel",
+  "description": "Plan travel routes with explicit timing information. Same domain as plan_simple_travel but returns temporally-annotated actions with ISO-8601 start/end times. Use when you need action timing, not just sequence (walk PT5M, taxi PT10M). Returns actions with duration, start_time, end_time fields. Use for time-aware pathfinding where arrival times matter.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "tasks": {
+        "type": "array",
+        "description": "List of [\"travel\", person, destination] tasks. Default: [[\"travel\", \"alice\", \"park\"]]",
+        "items": {"type": "array"}
+      }
+    },
+    "required": []
+  }
+}

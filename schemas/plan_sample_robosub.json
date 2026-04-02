@@ -1,0 +1,14 @@
+{
+  "name": "plan_sample_robosub",
+  "description": "Plan underwater robot missions for AUV competitions. Use when navigating through multiple zones with objectives: cross gates, pick objects, trace paths, touch vampires, fill coffins with garlic, defeat Dracula. Handles zone navigation, object localization, complex multi-step tasks. Returns complete mission plans with 30+ actions. Use for multi-zone navigation with interdependent objectives.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "task": {
+        "type": "string",
+        "description": "Task mode: 'full' (all zones in one plan) or 'staged' (one zone at a time). Default: 'full'."
+      }
+    },
+    "required": []
+  }
+}

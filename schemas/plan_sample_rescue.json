@@ -1,0 +1,14 @@
+{
+  "name": "plan_sample_rescue",
+  "description": "Coordinate multi-robot rescue operations with wheeled robots and drones. Use when planning search-and-rescue with heterogeneous robot capabilities. Drones fly and capture images; wheeled robots carry medicine. Handles movement, altitude changes, image capture, person inspection, medical support. Returns coordinated action sequences for all robots (r1, w1, a1). Use for multi-agent coordination with different capabilities.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "task": {
+        "type": "string",
+        "description": "Task type: 'move' (robot moves to location) or 'survey' (drone surveys for person). Default: 'survey'."
+      }
+    },
+    "required": []
+  }
+}
