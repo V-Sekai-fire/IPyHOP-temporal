@@ -15,6 +15,7 @@ Follow-up tools (operate on a cached planner by session_id):
 """
 
 import sys
+import json
 import uuid
 from pathlib import Path
 
@@ -126,32 +127,32 @@ def _result(planner, plan, init_state, note=None) -> dict:
 # plan_simple_travel
 # ---------------------------------------------------------------------------
 
-def handle_simple_travel(params: dict) -> dict:
+def handle_simple_travel(args: dict, **kwargs) -> str:
     """
     params:
       tasks      — [[\"travel\", person, destination], ...]
                    default: [[\"travel\", \"alice\", \"park\"]]
       state      — optional dict override for the initial state
     """
-    tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
+    tasks_raw = args.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
-        return {"error": "tasks must be a list"}
+        return json.dumps({"error": "tasks must be a list"})
     tasks = []
     for item in tasks_raw:
         if not isinstance(item, (list, tuple)) or len(item) < 2:
-            return {"error": f"each task must be [name, arg, ...], got {item!r}"}
+            return json.dumps({"error": f"each task must be [name, arg, ...], got {item!r}"})
         tasks.append(tuple(item))
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.simple_travel.task_based.simple_travel_domain import actions, methods
         from examples.simple_travel.task_based.simple_travel_problem import init_state
         from ipyhop import IPyHOP
-        state = _build_state(params["state"]) if params.get("state") else init_state
+        state = _build_state(args["state"]) if args.get("state") else init_state
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        return _result(planner, plan, state)
+        return json.dumps(_result(planner, plan, state))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -160,7 +161,7 @@ def handle_simple_travel(params: dict) -> dict:
 # plan_blocks_world
 # ---------------------------------------------------------------------------
 
-def handle_blocks_world(params: dict) -> dict:
+def handle_blocks_world(args: dict, **kwargs) -> str:
     """
     params:
       problem — "1a" | "1b" | "2a" | "2b" | "3"  (default "1b")
@@ -178,10 +179,10 @@ def handle_blocks_world(params: dict) -> dict:
         from ipyhop import IPyHOP, MultiGoal
 
         # Build state
-        if params.get("state"):
-            init_state = _build_state(params["state"])
+        if args.get("state"):
+            init_state = _build_state(args["state"])
         else:
-            problem = str(params.get("problem", "1b")).strip()
+            problem = str(args.get("problem", "1b")).strip()
             problem_map = {
                 "1a": ("init_state_1", "goal1a"),
                 "1b": ("init_state_1", "goal1b"),
@@ -190,13 +191,13 @@ def handle_blocks_world(params: dict) -> dict:
                 "3":  ("init_state_3", "goal3"),
             }
             if problem not in problem_map:
-                return {"error": f"'problem' must be one of {sorted(problem_map)}"}
+                return json.dumps({"error": f"'problem' must be one of {sorted(problem_map)}"})
             state_name, goal_name = problem_map[problem]
             init_state = getattr(prob, state_name)
 
         # Build task list — detect if any MultiGoal dicts are present
         has_multigoal = False
-        if params.get("tasks"):
+        if args.get("tasks"):
             task_list = []
             for t in params["tasks"]:
                 if isinstance(t, dict) and t.get("__multigoal__"):
@@ -210,7 +211,7 @@ def handle_blocks_world(params: dict) -> dict:
                 else:
                     task_list.append(tuple(t))
         else:
-            problem = str(params.get("problem", "1b")).strip()
+            problem = str(args.get("problem", "1b")).strip()
             problem_map = {
                 "1a": ("init_state_1", "goal1a"),
                 "1b": ("init_state_1", "goal1b"),
@@ -227,10 +228,10 @@ def handle_blocks_world(params: dict) -> dict:
         chosen_actions = gb_actions if has_multigoal else actions
         planner = IPyHOP(chosen_methods, chosen_actions)
         plan = planner.plan(init_state, task_list, verbose=0)
-        note = params.get("note") or (f"problem={params.get('problem','1b')}" if not params.get("state") else "custom")
-        return _result(planner, plan, init_state, note=note)
+        note = args.get("note") or (f"problem={args.get('problem','1b')}" if not args.get("state") else "custom")
+        return json.dumps(_result(planner, plan, init_state, note=note))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -239,7 +240,7 @@ def handle_blocks_world(params: dict) -> dict:
 # plan_rescue
 # ---------------------------------------------------------------------------
 
-def handle_rescue(params: dict) -> dict:
+def handle_rescue(args: dict, **kwargs) -> str:
     """
     params:
       task  — "move" | "survey"  (default "survey")
@@ -253,9 +254,9 @@ def handle_rescue(params: dict) -> dict:
         from examples.rescue.problem.rescue_problem_1 import init_state as default_state
         from ipyhop import IPyHOP
 
-        state = _build_state(params["state"]) if params.get("state") else default_state
+        state = _build_state(args["state"]) if args.get("state") else default_state
 
-        if params.get("tasks"):
+        if args.get("tasks"):
             # tuples may contain lists as args (e.g. coords) — convert inner lists to tuples
             tasks = []
             for t in params["tasks"]:
@@ -264,21 +265,21 @@ def handle_rescue(params: dict) -> dict:
                     args.append(tuple(a) if isinstance(a, list) else a)
                 tasks.append(tuple([t[0]] + args))
         else:
-            task = str(params.get("task", "survey")).strip()
+            task = str(args.get("task", "survey")).strip()
             task_map = {
                 "move":   [("move_task",   "r1", (5, 5))],
                 "survey": [("survey_task", "a1", (2, 2))],
             }
             if task not in task_map:
-                return {"error": f"'task' must be one of {sorted(task_map)}"}
+                return json.dumps({"error": f"'task' must be one of {sorted(task_map)}"})
             tasks = task_map[task]
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','survey')}")
-        return _result(planner, plan, state, note=note)
+        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','survey')}")
+        return json.dumps(_result(planner, plan, state, note=note))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -287,7 +288,7 @@ def handle_rescue(params: dict) -> dict:
 # plan_robosub
 # ---------------------------------------------------------------------------
 
-def handle_robosub(params: dict) -> dict:
+def handle_robosub(args: dict, **kwargs) -> str:
     """
     params:
       task  — "full" | "staged"  (default "full")
@@ -303,22 +304,22 @@ def handle_robosub(params: dict) -> dict:
         )
         from ipyhop import IPyHOP
 
-        state = _build_state(params["state"]) if params.get("state") else default_state
+        state = _build_state(args["state"]) if args.get("state") else default_state
 
-        if params.get("tasks"):
+        if args.get("tasks"):
             tasks = [tuple(t) for t in params["tasks"]]
         else:
-            task = str(params.get("task", "full")).strip()
+            task = str(args.get("task", "full")).strip()
             if task not in ("full", "staged"):
-                return {"error": "'task' must be 'full' or 'staged'"}
+                return json.dumps({"error": "'task' must be 'full' or 'staged'"})
             tasks = task_list_1 if task == "full" else task_list_2
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','full')}")
-        return _result(planner, plan, state, note=note)
+        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','full')}")
+        return json.dumps(_result(planner, plan, state, note=note))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -327,7 +328,7 @@ def handle_robosub(params: dict) -> dict:
 # plan_healthcare
 # ---------------------------------------------------------------------------
 
-def handle_healthcare(params: dict) -> dict:
+def handle_healthcare(args: dict, **kwargs) -> str:
     """
     params:
       task  — "single" | "two" | "shared_room"  (default "single")
@@ -341,27 +342,27 @@ def handle_healthcare(params: dict) -> dict:
         from examples.healthcare_scheduling.task_based import healthcare_problem as prob
         from ipyhop import IPyHOP
 
-        state = _build_state(params["state"]) if params.get("state") else prob.init_state
+        state = _build_state(args["state"]) if args.get("state") else prob.init_state
 
-        if params.get("tasks"):
+        if args.get("tasks"):
             tasks = [tuple(t) for t in params["tasks"]]
         else:
-            task = str(params.get("task", "single")).strip()
+            task = str(args.get("task", "single")).strip()
             task_map = {
                 "single":      "task_list_1",
                 "two":         "task_list_2",
                 "shared_room": "task_list_3",
             }
             if task not in task_map:
-                return {"error": f"'task' must be one of {sorted(task_map)}"}
+                return json.dumps({"error": f"'task' must be one of {sorted(task_map)}"})
             tasks = getattr(prob, task_map[task])
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','single')}")
-        return _result(planner, plan, state, note=note)
+        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','single')}")
+        return json.dumps(_result(planner, plan, state, note=note))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -370,32 +371,32 @@ def handle_healthcare(params: dict) -> dict:
 # plan_temporal_travel
 # ---------------------------------------------------------------------------
 
-def handle_temporal_travel(params: dict) -> dict:
+def handle_temporal_travel(args: dict, **kwargs) -> str:
     """
     params:
       tasks — [["travel", person, destination], ...]
               default: [["travel", "alice", "park"]]
       state — optional dict override for the initial state
     """
-    tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
+    tasks_raw = args.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
-        return {"error": "tasks must be a list"}
+        return json.dumps({"error": "tasks must be a list"})
     tasks = []
     for item in tasks_raw:
         if not isinstance(item, (list, tuple)) or len(item) < 2:
-            return {"error": f"each task must be [name, arg, ...], got {item!r}"}
+            return json.dumps({"error": f"each task must be [name, arg, ...], got {item!r}"})
         tasks.append(tuple(item))
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.temporal_travel.task_based.temporal_travel_domain import actions, methods
         from examples.temporal_travel.task_based.temporal_travel_problem import init_state as default_state
         from ipyhop import IPyHOP
-        state = _build_state(params["state"]) if params.get("state") else default_state
+        state = _build_state(args["state"]) if args.get("state") else default_state
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        return _result(planner, plan, state)
+        return json.dumps(_result(planner, plan, state))
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
 
@@ -404,7 +405,7 @@ def handle_temporal_travel(params: dict) -> dict:
 # plan_replan — replan from a failure node in a prior session
 # ---------------------------------------------------------------------------
 
-def handle_replan(params: dict) -> dict:
+def handle_replan(args: dict, **kwargs) -> str:
     """
     params:
       session_id   — from a prior plan_* call
@@ -412,30 +413,30 @@ def handle_replan(params: dict) -> dict:
       blacklist    — optional list of action tuples to blacklist before replanning,
                      e.g. [["a_walk", "alice", "home_a", "park"]]
     """
-    sid = str(params.get("session_id", "")).strip()
+    sid = str(args.get("session_id", "")).strip()
     if not sid or sid not in _SESSIONS:
-        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
+        return json.dumps({"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."})
 
-    fail_node_raw = params.get("fail_node_id")
+    fail_node_raw = args.get("fail_node_id")
     if fail_node_raw is None:
-        return {"error": "'fail_node_id' is required"}
+        return json.dumps({"error": "'fail_node_id' is required"})
     try:
         fail_node_id = int(fail_node_raw)
     except (TypeError, ValueError):
-        return {"error": "'fail_node_id' must be an integer"}
+        return json.dumps({"error": "'fail_node_id' must be an integer"})
 
     session = _SESSIONS[sid]
     planner    = session["planner"]
     init_state = session["init_state"]
 
-    blacklist = params.get("blacklist") or []
+    blacklist = args.get("blacklist") or []
     for cmd in blacklist:
         planner.blacklist_command(tuple(cmd))
 
     try:
         plan = planner.replan(init_state, fail_node_id, verbose=0)
     except Exception as exc:
-        return {"error": f"replan failed: {exc}"}
+        return json.dumps({"error": f"replan failed: {exc}"})
 
     plan = plan or []
     # Update cache with new planner state (same sid — it's the same session)
@@ -453,29 +454,29 @@ def handle_replan(params: dict) -> dict:
 # plan_simulate — simulate a prior plan from a given step
 # ---------------------------------------------------------------------------
 
-def handle_simulate(params: dict) -> dict:
+def handle_simulate(args: dict, **kwargs) -> str:
     """
     params:
       session_id  — from a prior plan_* or plan_replan call
       start_index — step index to simulate from (default 0 = full plan)
     """
-    sid = str(params.get("session_id", "")).strip()
+    sid = str(args.get("session_id", "")).strip()
     if not sid or sid not in _SESSIONS:
-        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
+        return json.dumps({"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."})
 
-    start_index = int(params.get("start_index", 0))
+    start_index = int(args.get("start_index", 0))
 
     session    = _SESSIONS[sid]
     planner    = session["planner"]
     init_state = session["init_state"]
 
     if planner.sol_plan is None:
-        return {"error": "No plan in this session. Run plan_* first."}
+        return json.dumps({"error": "No plan in this session. Run plan_* first."})
 
     try:
         states = planner.simulate(init_state, start_ind=start_index)
     except Exception as exc:
-        return {"error": f"simulate failed: {exc}"}
+        return json.dumps({"error": f"simulate failed: {exc}"})
 
     # Render each state snapshot as a dict of its __dict__ (excluding private keys)
     snapshots = [_serialize_state(s) for s in states]
