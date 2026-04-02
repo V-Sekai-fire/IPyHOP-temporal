@@ -8,10 +8,6 @@ Domain tools (each returns a session_id for follow-up calls):
   plan_robosub
   plan_healthcare
   plan_temporal_travel
-
-Follow-up tools (operate on a cached planner by session_id):
-  plan_replan   — replan from a failure node in a prior session
-  plan_simulate — simulate a prior plan forward from a given step index
 """
 
 import sys
@@ -142,7 +138,7 @@ def _result(planner, plan, init_state, note=None) -> dict:
 # plan_simple_travel
 # ---------------------------------------------------------------------------
 
-def handle_simple_travel(args: dict, **kwargs) -> dict:
+def handle_simple_travel(params: dict, **kwargs) -> dict:
     """
     params:
       tasks      — [[\"travel\", person, destination], ...]
@@ -176,7 +172,7 @@ def handle_simple_travel(args: dict, **kwargs) -> dict:
 # plan_blocks_world
 # ---------------------------------------------------------------------------
 
-def handle_blocks_world(args: dict, **kwargs) -> dict:
+def handle_blocks_world(params: dict, **kwargs) -> dict:
     """
     params:
       problem — "1a" | "1b" | "2a" | "2b" | "3"  (default "1b")
@@ -260,7 +256,7 @@ def handle_blocks_world(args: dict, **kwargs) -> dict:
 # plan_rescue
 # ---------------------------------------------------------------------------
 
-def handle_rescue(args: dict, **kwargs) -> dict:
+def handle_rescue(params: dict, **kwargs) -> dict:
     """
     params:
       task  — "move" | "survey"  (default "survey")
@@ -308,7 +304,7 @@ def handle_rescue(args: dict, **kwargs) -> dict:
 # plan_robosub
 # ---------------------------------------------------------------------------
 
-def handle_robosub(args: dict, **kwargs) -> dict:
+def handle_robosub(params: dict, **kwargs) -> dict:
     """
     params:
       task  — "full" | "staged"  (default "full")
@@ -348,7 +344,7 @@ def handle_robosub(args: dict, **kwargs) -> dict:
 # plan_healthcare
 # ---------------------------------------------------------------------------
 
-def handle_healthcare(args: dict, **kwargs) -> dict:
+def handle_healthcare(params: dict, **kwargs) -> dict:
     """
     params:
       task  — "single" | "two" | "shared_room"  (default "single")
@@ -391,7 +387,7 @@ def handle_healthcare(args: dict, **kwargs) -> dict:
 # plan_temporal_travel
 # ---------------------------------------------------------------------------
 
-def handle_temporal_travel(args: dict, **kwargs) -> dict:
+def handle_temporal_travel(params: dict, **kwargs) -> dict:
     """
     params:
       tasks — [["travel", person, destination], ...]
@@ -419,117 +415,3 @@ def handle_temporal_travel(args: dict, **kwargs) -> dict:
         return {"error": str(exc)}
     finally:
         _remove_paths(added)
-
-
-# ---------------------------------------------------------------------------
-# plan_replan — replan from a failure node in a prior session
-# ---------------------------------------------------------------------------
-
-def handle_replan(args: dict, **kwargs) -> dict:
-    """
-    params:
-      session_id   — from a prior plan_* call
-      fail_node_id — integer node id in sol_tree that failed
-      blacklist    — optional list of action tuples to blacklist before replanning,
-                     e.g. [["a_walk", "alice", "home_a", "park"]]
-    """
-    # Defensive: accept args as first positional or via kwargs
-    if not isinstance(args, dict):
-        # Try to parse as JSON string
-        try:
-            args = json.loads(args) if isinstance(args, str) else {}
-        except:
-            return {"error": "args must be a dict or JSON string"}
-    
-    sid = str(args.get("session_id", "")).strip()
-    if not sid or sid not in _SESSIONS:
-        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
-
-    fail_node_raw = args.get("fail_node_id")
-    if fail_node_raw is None:
-        return {"error": "'fail_node_id' is required"}
-    try:
-        fail_node_id = int(fail_node_raw)
-    except (TypeError, ValueError):
-        return {"error": "'fail_node_id' must be an integer"}
-
-    session = _SESSIONS[sid]
-    planner    = session["planner"]
-    init_state = session["init_state"]
-
-    blacklist = args.get("blacklist") or []
-    for cmd in blacklist:
-        planner.blacklist_command(tuple(cmd))
-
-    try:
-        plan = planner.replan(init_state, fail_node_id, verbose=0)
-    except Exception as exc:
-        return {"error": f"replan failed: {exc}"}
-
-    plan = plan or []
-    # Update cache with new planner state (same sid — it's the same session)
-    _SESSIONS[sid] = {"planner": planner, "init_state": init_state}
-    return {
-        "session_id": sid,
-        "plan":       _plan_to_json(plan),
-        "steps":      len(plan),
-        "iterations": planner.iterations,
-        "blacklisted": [list(c) for c in planner.blacklist],
-    }
-
-
-
-
-def handle_simulate(args: dict, **kwargs) -> dict:
-    """
-    params:
-      session_id  — from a prior plan_* or plan_replan call
-      start_index — step index to simulate from (default 0 = full plan)
-    """
-    # Defensive: accept args as first positional or via kwargs
-    if not isinstance(args, dict):
-        # Try to parse as JSON string
-        try:
-            args = json.loads(args) if isinstance(args, str) else {}
-        except:
-            return {"error": "args must be a dict or JSON string"}
-    
-    sid = str(args.get("session_id", "")).strip()
-    if not sid or sid not in _SESSIONS:
-        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
-
-    start_index_raw = args.get("start_index", 0)
-    try:
-        start_index = int(start_index_raw) if start_index_raw is not None else 0
-    except (TypeError, ValueError):
-        return {"error": "'start_index' must be an integer"}
-
-    session    = _SESSIONS[sid]
-    planner    = session["planner"]
-    init_state = session["init_state"]
-
-    if planner.sol_plan is None:
-        return {"error": "No plan in this session. Run plan_* first."}
-
-    try:
-        states = planner.simulate(init_state, start_ind=start_index)
-    except Exception as exc:
-        return {"error": f"simulate failed: {exc}"}
-
-    # Render each state snapshot as a dict of its __dict__ (excluding private keys)
-    snapshots = [_serialize_state(s) for s in states]
-
-    # Defensive: ensure sol_plan is sliceable
-    sol_plan = list(planner.sol_plan) if hasattr(planner.sol_plan, '__iter__') else []
-    plan_slice = _plan_to_json(sol_plan[start_index:])
-
-    return {
-        "session_id":  sid,
-        "start_index": start_index,
-        "steps":       len(plan_slice),
-        "plan":        plan_slice,
-        "states":      snapshots,
-    }
-
-
-
