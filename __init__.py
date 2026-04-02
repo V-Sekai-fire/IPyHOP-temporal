@@ -248,7 +248,7 @@ _TOOLS = [
 
 
 def register(ctx):
-    plugin_name = ctx.plugin_name
+    plugin_name = ctx.manifest.name
     for name, schema, handler in _TOOLS:
         ctx.register_tool(name, plugin_name, schema, handler)
 
