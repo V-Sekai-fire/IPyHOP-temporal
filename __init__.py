@@ -5,6 +5,8 @@ from .tools import (
     handle_robosub,
     handle_healthcare,
     handle_temporal_travel,
+    handle_replan,
+    handle_simulate,
 )
 
 _TOOLS = [
@@ -152,6 +154,69 @@ _TOOLS = [
             },
         },
         handle_temporal_travel,
+    ),
+    (
+        "plan_replan",
+        {
+            "name": "plan_replan",
+            "description": (
+                "Replan from a failure node in a prior planning session. "
+                "Use when an action in a previously generated plan fails at execution time. "
+                "Provide the session_id from any plan_* call and the fail_node_id (integer) "
+                "from the sol_tree. Optionally blacklist specific actions to prevent them "
+                "from being chosen again. Returns a revised plan on the same session_id."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "session_id returned by a prior plan_* call.",
+                    },
+                    "fail_node_id": {
+                        "type": "integer",
+                        "description": "Node id in the solution tree that failed.",
+                    },
+                    "blacklist": {
+                        "type": "array",
+                        "description": (
+                            "Optional list of action tuples to blacklist before replanning. "
+                            "Each entry is a list, e.g. [\"a_walk\", \"alice\", \"home_a\", \"park\"]."
+                        ),
+                        "items": {"type": "array"},
+                    },
+                },
+                "required": ["session_id", "fail_node_id"],
+            },
+        },
+        handle_replan,
+    ),
+    (
+        "plan_simulate",
+        {
+            "name": "plan_simulate",
+            "description": (
+                "Simulate execution of a previously generated plan, returning the sequence "
+                "of world states the system transitions through. "
+                "Use start_index to simulate from a mid-plan step (e.g. after partial execution). "
+                "Returns each state snapshot as a dict alongside the plan slice being simulated."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "session_id returned by a prior plan_* or plan_replan call.",
+                    },
+                    "start_index": {
+                        "type": "integer",
+                        "description": "Step index to start simulation from (default 0 = full plan).",
+                    },
+                },
+                "required": ["session_id"],
+            },
+        },
+        handle_simulate,
     ),
 ]
 

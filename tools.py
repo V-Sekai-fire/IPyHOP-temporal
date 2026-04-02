@@ -1,20 +1,30 @@
 """
-plan plugin tools — one dedicated handler per IPyHOP example domain.
+plan plugin tools — IPyHOP HTN planner with plan / replan / simulate.
 
-Tools exposed:
-  plan_simple_travel        — person travels home→destination (task-based)
-  plan_blocks_world         — rearrange blocks to match a goal state (goal-based)
-  plan_rescue               — robot/drone survey-and-rescue mission (task-based)
-  plan_robosub              — underwater robot navigation tasks (task-based)
-  plan_healthcare           — temporal surgical scheduling (task-based, temporal)
-  plan_temporal_travel      — simple_travel with ISO-8601 timestamps (temporal)
+Domain tools (each returns a session_id for follow-up calls):
+  plan_simple_travel
+  plan_blocks_world
+  plan_rescue
+  plan_robosub
+  plan_healthcare
+  plan_temporal_travel
+
+Follow-up tools (operate on a cached planner by session_id):
+  plan_replan   — replan from a failure node in a prior session
+  plan_simulate — simulate a prior plan forward from a given step index
 """
 
 import sys
+import uuid
 from pathlib import Path
 
-PLAN_DIR  = Path(__file__).parent
-EXAMPLES  = PLAN_DIR / "examples"
+PLAN_DIR = Path(__file__).parent
+EXAMPLES = PLAN_DIR / "examples"
+
+# ---------------------------------------------------------------------------
+# Planner cache  { session_id -> {"planner": IPyHOP, "init_state": State} }
+# ---------------------------------------------------------------------------
+_SESSIONS: dict = {}
 
 
 def _add_paths(*dirs):
@@ -45,37 +55,47 @@ def _plan_to_json(plan) -> list:
     return result
 
 
-def _result(planner, plan, note=None):
+def _store(planner, init_state) -> str:
+    sid = str(uuid.uuid4())[:8]
+    _SESSIONS[sid] = {"planner": planner, "init_state": init_state}
+    return sid
+
+
+def _result(planner, plan, init_state, note=None) -> dict:
     if plan is False or plan is None:
         return {"plan": None, "note": "No plan found"}
-    r = {"plan": _plan_to_json(plan), "steps": len(plan), "iterations": planner.iterations}
+    sid = _store(planner, init_state)
+    r = {
+        "session_id": sid,
+        "plan":       _plan_to_json(plan),
+        "steps":      len(plan),
+        "iterations": planner.iterations,
+    }
     if note:
         r["note"] = note
     return r
 
 
 # ---------------------------------------------------------------------------
-# simple_travel (task-based)
+# plan_simple_travel
 # ---------------------------------------------------------------------------
 
 def handle_simple_travel(params: dict) -> dict:
     """
     params:
-      tasks  — list of travel tasks, e.g. [["travel","alice","park"]]
-               defaults to [["travel","alice","park"]]
+      tasks — [["travel", person, destination], ...]
+              default: [["travel", "alice", "park"]]
     """
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     tasks = [tuple(t) for t in tasks_raw]
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.simple_travel.task_based.simple_travel_domain import actions, methods
         from examples.simple_travel.task_based.simple_travel_problem import init_state
         from ipyhop import IPyHOP
-
         planner = IPyHOP(methods, actions)
         plan = planner.plan(init_state, tasks, verbose=0)
-        return _result(planner, plan)
+        return _result(planner, plan, init_state)
     except Exception as exc:
         return {"error": str(exc)}
     finally:
@@ -83,17 +103,15 @@ def handle_simple_travel(params: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# blocks_world (task-based, uses goal-state MultiGoal)
+# plan_blocks_world
 # ---------------------------------------------------------------------------
 
 def handle_blocks_world(params: dict) -> dict:
     """
     params:
-      problem  — "1a" | "1b" | "2a" | "2b" | "3"  (default "1b")
-                 selects which init_state + goal pair to solve
+      problem — "1a" | "1b" | "2a" | "2b" | "3"  (default "1b")
     """
     problem = str(params.get("problem", "1b")).strip()
-
     problem_map = {
         "1a": ("init_state_1", "goal1a"),
         "1b": ("init_state_1", "goal1b"),
@@ -103,22 +121,19 @@ def handle_blocks_world(params: dict) -> dict:
     }
     if problem not in problem_map:
         return {"error": f"'problem' must be one of {sorted(problem_map)}"}
-
     state_name, goal_name = problem_map[problem]
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.blocks_world.task_based.blocks_world_actions import actions
         from examples.blocks_world.task_based.blocks_world_methods_1 import methods
         import examples.blocks_world.task_based.blocks_world_problem as prob
         from ipyhop import IPyHOP
-
         init_state = getattr(prob, state_name)
         goal       = getattr(prob, goal_name)
-
         planner = IPyHOP(methods, actions)
         plan = planner.plan(init_state, [goal], verbose=0)
-        return _result(planner, plan, note=f"problem={problem} ({state_name} → {goal_name})")
+        return _result(planner, plan, init_state,
+                       note=f"problem={problem} ({state_name} → {goal_name})")
     except Exception as exc:
         return {"error": str(exc)}
     finally:
@@ -126,37 +141,30 @@ def handle_blocks_world(params: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# rescue (task-based)
+# plan_rescue
 # ---------------------------------------------------------------------------
 
 def handle_rescue(params: dict) -> dict:
     """
     params:
-      task  — "move" | "survey"  (default "survey")
-              "move"   → move robot r1 to (5,5)
-              "survey" → drone a1 surveys location (2,2)
+      task — "move" | "survey"  (default "survey")
     """
     task = str(params.get("task", "survey")).strip()
-
     task_map = {
         "move":   [("move_task",   "r1", (5, 5))],
         "survey": [("survey_task", "a1", (2, 2))],
     }
     if task not in task_map:
         return {"error": f"'task' must be one of {sorted(task_map)}"}
-
-    tasks = task_map[task]
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.rescue.domain.rescue_actions import actions
         from examples.rescue.domain.rescue_methods import methods
         from examples.rescue.problem.rescue_problem_1 import init_state
         from ipyhop import IPyHOP
-
         planner = IPyHOP(methods, actions)
-        plan = planner.plan(init_state, tasks, verbose=0)
-        return _result(planner, plan, note=f"task={task}")
+        plan = planner.plan(init_state, task_map[task], verbose=0)
+        return _result(planner, plan, init_state, note=f"task={task}")
     except Exception as exc:
         return {"error": str(exc)}
     finally:
@@ -164,33 +172,29 @@ def handle_rescue(params: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# robosub (task-based)
+# plan_robosub
 # ---------------------------------------------------------------------------
 
 def handle_robosub(params: dict) -> dict:
     """
     params:
-      task  — "full" | "staged"  (default "full")
-              "full"   → pinger + all 5 zones in one task list
-              "staged" → pinger + each zone as a separate task
+      task — "full" | "staged"  (default "full")
     """
     task = str(params.get("task", "full")).strip()
     if task not in ("full", "staged"):
         return {"error": "'task' must be 'full' or 'staged'"}
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.robosub.domain.robosub_mod_actions import actions
         from examples.robosub.domain.robosub_mod_methods import methods
         from examples.robosub.problem.robosub_mod_problem import (
-            init_state, task_list_1, task_list_2
+            init_state, task_list_1, task_list_2,
         )
         from ipyhop import IPyHOP
-
         tasks = task_list_1 if task == "full" else task_list_2
         planner = IPyHOP(methods, actions)
         plan = planner.plan(init_state, tasks, verbose=0)
-        return _result(planner, plan, note=f"task={task}")
+        return _result(planner, plan, init_state, note=f"task={task}")
     except Exception as exc:
         return {"error": str(exc)}
     finally:
@@ -198,19 +202,15 @@ def handle_robosub(params: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# healthcare scheduling (temporal)
+# plan_healthcare
 # ---------------------------------------------------------------------------
 
 def handle_healthcare(params: dict) -> dict:
     """
     params:
-      task  — "single" | "two" | "shared_room"  (default "single")
-              "single"      → schedule patient1 in OR1
-              "two"         → schedule patient1 + patient2
-              "shared_room" → patient1 + patient3 both needing cardiac room
+      task — "single" | "two" | "shared_room"  (default "single")
     """
     task = str(params.get("task", "single")).strip()
-
     task_map = {
         "single":      "task_list_1",
         "two":         "task_list_2",
@@ -218,17 +218,15 @@ def handle_healthcare(params: dict) -> dict:
     }
     if task not in task_map:
         return {"error": f"'task' must be one of {sorted(task_map)}"}
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.healthcare_scheduling.task_based.healthcare_domain import actions, methods
         from examples.healthcare_scheduling.task_based import healthcare_problem as prob
         from ipyhop import IPyHOP
-
         tasks = getattr(prob, task_map[task])
         planner = IPyHOP(methods, actions)
         plan = planner.plan(prob.init_state, tasks, verbose=0)
-        return _result(planner, plan, note=f"task={task}")
+        return _result(planner, plan, prob.init_state, note=f"task={task}")
     except Exception as exc:
         return {"error": str(exc)}
     finally:
@@ -236,28 +234,122 @@ def handle_healthcare(params: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# temporal_travel (temporal, ISO-8601 timestamps)
+# plan_temporal_travel
 # ---------------------------------------------------------------------------
 
 def handle_temporal_travel(params: dict) -> dict:
     """
     params:
-      tasks  — list of travel tasks (default [["travel","alice","park"]])
-               each step returns start_time + end_time in the temporal metadata
+      tasks — [["travel", person, destination], ...]
+              default: [["travel", "alice", "park"]]
     """
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     tasks = [tuple(t) for t in tasks_raw]
-
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.temporal_travel.task_based.temporal_travel_domain import actions, methods
         from examples.temporal_travel.task_based.temporal_travel_problem import init_state
         from ipyhop import IPyHOP
-
         planner = IPyHOP(methods, actions)
         plan = planner.plan(init_state, tasks, verbose=0)
-        return _result(planner, plan)
+        return _result(planner, plan, init_state)
     except Exception as exc:
         return {"error": str(exc)}
     finally:
         _remove_paths(added)
+
+
+# ---------------------------------------------------------------------------
+# plan_replan — replan from a failure node in a prior session
+# ---------------------------------------------------------------------------
+
+def handle_replan(params: dict) -> dict:
+    """
+    params:
+      session_id   — from a prior plan_* call
+      fail_node_id — integer node id in sol_tree that failed
+      blacklist    — optional list of action tuples to blacklist before replanning,
+                     e.g. [["a_walk", "alice", "home_a", "park"]]
+    """
+    sid = str(params.get("session_id", "")).strip()
+    if not sid or sid not in _SESSIONS:
+        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
+
+    fail_node_raw = params.get("fail_node_id")
+    if fail_node_raw is None:
+        return {"error": "'fail_node_id' is required"}
+    try:
+        fail_node_id = int(fail_node_raw)
+    except (TypeError, ValueError):
+        return {"error": "'fail_node_id' must be an integer"}
+
+    session = _SESSIONS[sid]
+    planner    = session["planner"]
+    init_state = session["init_state"]
+
+    blacklist = params.get("blacklist") or []
+    for cmd in blacklist:
+        planner.blacklist_command(tuple(cmd))
+
+    try:
+        plan = planner.replan(init_state, fail_node_id, verbose=0)
+    except Exception as exc:
+        return {"error": f"replan failed: {exc}"}
+
+    if plan is False or plan is None:
+        return {"session_id": sid, "plan": None, "note": "No replan found"}
+
+    # Update cache with new planner state (same sid — it's the same session)
+    _SESSIONS[sid] = {"planner": planner, "init_state": init_state}
+    return {
+        "session_id": sid,
+        "plan":       _plan_to_json(plan),
+        "steps":      len(plan),
+        "iterations": planner.iterations,
+        "blacklisted": [list(c) for c in planner.blacklist],
+    }
+
+
+# ---------------------------------------------------------------------------
+# plan_simulate — simulate a prior plan from a given step
+# ---------------------------------------------------------------------------
+
+def handle_simulate(params: dict) -> dict:
+    """
+    params:
+      session_id  — from a prior plan_* or plan_replan call
+      start_index — step index to simulate from (default 0 = full plan)
+    """
+    sid = str(params.get("session_id", "")).strip()
+    if not sid or sid not in _SESSIONS:
+        return {"error": f"Unknown session_id '{sid}'. Run a plan_* tool first."}
+
+    start_index = int(params.get("start_index", 0))
+
+    session    = _SESSIONS[sid]
+    planner    = session["planner"]
+    init_state = session["init_state"]
+
+    if not planner.sol_plan:
+        return {"error": "No plan in this session. Run plan_* first."}
+
+    try:
+        states = planner.simulate(init_state, start_ind=start_index)
+    except Exception as exc:
+        return {"error": f"simulate failed: {exc}"}
+
+    # Render each state snapshot as a dict of its __dict__ (excluding private keys)
+    snapshots = []
+    for s in states:
+        snap = {k: v for k, v in vars(s).items() if not k.startswith("_")}
+        snapshots.append(snap)
+
+    plan_slice = _plan_to_json(planner.sol_plan[start_index:])
+
+    return {
+        "session_id":  sid,
+        "start_index": start_index,
+        "steps":       len(plan_slice),
+        "plan":        plan_slice,
+        "states":      snapshots,
+    }
