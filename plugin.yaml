@@ -1,0 +1,6 @@
+name: plan
+version: "1.0"
+description: >
+  HTN (Hierarchical Task Network) planner via IPyHOP. Exposes two tools:
+  plan_run — load a Python domain file and solve a planning problem;
+  plan_example — run a built-in example to verify the install.
