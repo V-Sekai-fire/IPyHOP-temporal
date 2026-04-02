@@ -23,6 +23,7 @@ _TOOLS = [
 
 
 def register(ctx):
+    plugin_name = ctx.manifest.name
     for name, handler in _TOOLS:
         schema = json.loads((_SCHEMAS_DIR / f"{name}.json").read_text())
-        ctx.register_tool(name, schema, handler)
+        ctx.register_tool(name, plugin_name, schema, handler)
