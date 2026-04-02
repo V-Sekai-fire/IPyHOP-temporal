@@ -99,10 +99,12 @@ def format_iso8601_datetime(dt: datetime) -> str:
     Format a datetime object into an ISO 8601 string.
 
     :param dt: datetime object
-    :return: ISO 8601 datetime string
+    :return: ISO 8601 datetime string (UTC with Z suffix)
     """
+    from datetime import timezone
+    
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.now().astimezone().tzinfo)
+        dt = dt.replace(tzinfo=timezone.utc)
     return dt.isoformat().replace("+00:00", "Z")
 
 

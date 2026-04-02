@@ -27,7 +27,7 @@ _TOOLS = [
                 "properties": {
                     "tasks": {
                         "type": "array",
-                        "description": "List of ["travel", person, destination] tasks. Default: [["travel", "alice", "park"]]",
+                        "description": 'List of ["travel", person, destination] tasks. Default: [["travel", "alice", "park"]]',
                         "items": {"type": "array"},
                     },
                 },
@@ -151,7 +151,7 @@ _TOOLS = [
                 "properties": {
                     "tasks": {
                         "type": "array",
-                        "description": "List of ["travel", person, destination] tasks. Default: [["travel", "alice", "park"]]",
+                        "description": 'List of ["travel", person, destination] tasks. Default: [["travel", "alice", "park"]]',
                         "items": {"type": "array"},
                     },
                 },
@@ -184,7 +184,7 @@ _TOOLS = [
                     },
                     "blacklist": {
                         "type": "array",
-                        "description": "Optional list of action tuples to avoid. E.g. [["a_walk", "alice", "home_a", "park"]].",
+                        "description": 'Optional list of action tuples to avoid. E.g. [["a_walk", "alice", "home_a", "park"]].',
                         "items": {"type": "array"},
                     },
                 },
