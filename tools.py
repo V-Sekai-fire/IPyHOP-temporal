@@ -87,8 +87,7 @@ def _store(planner, init_state) -> str:
 
 
 def _result(planner, plan, init_state, note=None) -> dict:
-    if plan is False or plan is None:
-        return {"plan": None, "note": "No plan found"}
+    plan = plan or []
     sid = _store(planner, init_state)
     r = {
         "session_id": sid,
@@ -404,9 +403,7 @@ def handle_replan(params: dict) -> dict:
     except Exception as exc:
         return {"error": f"replan failed: {exc}"}
 
-    if plan is False or plan is None:
-        return {"session_id": sid, "plan": None, "note": "No replan found"}
-
+    plan = plan or []
     # Update cache with new planner state (same sid — it's the same session)
     _SESSIONS[sid] = {"planner": planner, "init_state": init_state}
     return {
