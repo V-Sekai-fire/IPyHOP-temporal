@@ -1,11 +1,13 @@
+from typing import Any
+
 from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR, EXAMPLES
 
 
-def handle_temporal_travel(params: dict, **kwargs) -> dict:
+def handle_temporal_travel(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
         return {"error": "tasks must be a list"}
-    tasks = []
+    tasks: list[tuple] = []
     for item in tasks_raw:
         if not isinstance(item, (list, tuple)) or len(item) < 2:
             return {"error": f"each task must be [name, arg, ...], got {item!r}"}

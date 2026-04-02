@@ -1,7 +1,8 @@
+from typing import Any
+
 from ._common import _add_paths, _remove_paths, _build_state, _result, _recursive_json_parse, PLAN_DIR, EXAMPLES
 
-
-_PROBLEM_MAP = {
+_PROBLEM_MAP: dict[str, tuple[str, str]] = {
     "1a": ("init_state_1", "goal1a"),
     "1b": ("init_state_1", "goal1b"),
     "2a": ("init_state_2", "goal2a"),
@@ -10,7 +11,7 @@ _PROBLEM_MAP = {
 }
 
 
-def handle_blocks_world(params: dict, **kwargs) -> dict:
+def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.blocks_world.task_based.blocks_world_actions import actions
@@ -20,9 +21,9 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
         import examples.blocks_world.task_based.blocks_world_problem as prob
         from ipyhop import IPyHOP, MultiGoal
 
-        problem = str(params.get("problem", "1b")).strip()
+        problem: str = str(params.get("problem", "1b")).strip()
 
-        state_data = _recursive_json_parse(params.get("state"))
+        state_data: Any = _recursive_json_parse(params.get("state"))
         if state_data:
             init_state = _build_state(state_data)
         else:
@@ -31,11 +32,11 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
             state_name, _ = _PROBLEM_MAP[problem]
             init_state = getattr(prob, state_name)
 
-        tasks_data = _recursive_json_parse(params.get("tasks"))
+        tasks_data: Any = _recursive_json_parse(params.get("tasks"))
 
-        has_multigoal = False
+        has_multigoal: bool = False
+        task_list: list = []
         if tasks_data:
-            task_list = []
             for t in tasks_data:
                 if isinstance(t, dict) and t.get("__multigoal__"):
                     has_multigoal = True
@@ -56,7 +57,7 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
         chosen_actions = gb_actions if has_multigoal else actions
         planner = IPyHOP(chosen_methods, chosen_actions)
         plan = planner.plan(init_state, task_list, verbose=0)
-        note = params.get("note") or (f"problem={params.get('problem','1b')}" if not state_data else "custom")
+        note: str = params.get("note") or (f"problem={params.get('problem','1b')}" if not state_data else "custom")
         return _result(planner, plan, init_state, note=note)
     except Exception as exc:
         return {"error": str(exc)}

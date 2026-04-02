@@ -1,16 +1,14 @@
 import sys
 import json
-import uuid
 from pathlib import Path
+from typing import Any
 
-PLAN_DIR = Path(__file__).parent.parent
-EXAMPLES = PLAN_DIR / "examples"
-
-_SESSIONS: dict = {}
+PLAN_DIR: Path = Path(__file__).parent.parent
+EXAMPLES: Path = PLAN_DIR / "examples"
 
 
-def _add_paths(*dirs):
-    added = []
+def _add_paths(*dirs: Path) -> list[str]:
+    added: list[str] = []
     for d in dirs:
         s = str(d)
         if s not in sys.path:
@@ -19,7 +17,7 @@ def _add_paths(*dirs):
     return added
 
 
-def _remove_paths(added):
+def _remove_paths(added: list[str]) -> None:
     for s in added:
         try:
             sys.path.remove(s)
@@ -27,8 +25,8 @@ def _remove_paths(added):
             pass
 
 
-def _plan_to_json(plan) -> list:
-    result = []
+def _plan_to_json(plan: list) -> list:
+    result: list = []
     for item in plan:
         if isinstance(item, tuple) and len(item) == 2 and isinstance(item[1], dict):
             result.append({"action": list(item[0]), "temporal": item[1]})
@@ -37,12 +35,12 @@ def _plan_to_json(plan) -> list:
     return result
 
 
-def _coerce_keys(obj):
+def _coerce_keys(obj: Any) -> Any:
     """Convert string-repr tuple keys (JSON limitation) back to real tuples."""
     if not isinstance(obj, dict):
         return obj
     import ast
-    result = {}
+    result: dict = {}
     for k, v in obj.items():
         if isinstance(k, str) and k.startswith("(") and k.endswith(")"):
             try:
@@ -53,7 +51,7 @@ def _coerce_keys(obj):
     return result
 
 
-def _build_state(state_dict, name: str = "custom_state"):
+def _build_state(state_dict: dict, name: str = "custom_state") -> Any:
     """Build an IPyHOP State from a plain dict."""
     from ipyhop import State
     s = State(name)
@@ -62,7 +60,7 @@ def _build_state(state_dict, name: str = "custom_state"):
     return s
 
 
-def _serialize_val(v):
+def _serialize_val(v: Any) -> Any:
     """Recursively make a value JSON-safe, stringifying tuple keys in dicts."""
     from ipyhop import State
     if isinstance(v, State):
@@ -74,7 +72,7 @@ def _serialize_val(v):
     return v
 
 
-def _recursive_json_parse(obj):
+def _recursive_json_parse(obj: Any) -> Any:
     """Recursively parse JSON strings in nested structures."""
     if isinstance(obj, str):
         try:
@@ -89,9 +87,9 @@ def _recursive_json_parse(obj):
     return obj
 
 
-def _serialize_state(s) -> dict:
+def _serialize_state(s: Any) -> dict[str, Any]:
     """Serialize a State snapshot to a JSON-safe dict, stringifying tuple keys."""
-    result = {}
+    result: dict[str, Any] = {}
     for k, v in vars(s).items():
         if k.startswith("_"):
             continue
@@ -99,17 +97,9 @@ def _serialize_state(s) -> dict:
     return result
 
 
-def _store(planner, init_state) -> str:
-    sid = str(uuid.uuid4())[:8]
-    _SESSIONS[sid] = {"planner": planner, "init_state": init_state}
-    return sid
-
-
-def _result(planner, plan, init_state, note=None) -> dict:
+def _result(planner: Any, plan: list, init_state: Any, note: str | None = None) -> dict[str, Any]:
     plan = plan or []
-    sid = _store(planner, init_state)
-    r = {
-        "session_id": sid,
+    r: dict[str, Any] = {
         "plan":       _plan_to_json(plan),
         "steps":      len(plan),
         "iterations": planner.iterations,
