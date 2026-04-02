@@ -1,6 +1,198 @@
 name: plan
 version: "1.0"
 description: >
-  HTN (Hierarchical Task Network) planner via IPyHOP. Exposes two tools:
-  plan_run — load a Python domain file and solve a planning problem;
-  plan_example — run a built-in example to verify the install.
+  HTN (Hierarchical Task Network) planner via IPyHOP.
+  Exposes plan / replan / simulate over six built-in domains.
+
+domains:
+
+  simple_travel:
+    tool: plan_simple_travel
+    type: task-based
+    entities:
+      persons: [alice, bob]
+      locations: [home_a, home_b, park, station, downtown]
+      taxis: [taxi1, taxi2]
+    state_variables:
+      loc:  "dict[entity -> location] — current position of each person/taxi"
+      cash: "dict[person -> float]    — cash on hand"
+      owe:  "dict[person -> float]    — amount owed to taxi driver"
+      rigid.types: "dict[type -> list] — type membership (person/location/taxi)"
+      rigid.dist:  "dict[tuple(loc,loc) -> int] — distances between locations"
+    actions:
+      a_walk(p, x, y):       "walk person p from x to y; precondition: dist(x,y) <= 2"
+      a_call_taxi(p, x):     "summon taxi1 to location x, person p boards"
+      a_ride_taxi(p, y):     "ride taxi to y; sets owe[p] = 1.5 + 0.5*dist"
+      a_pay_driver(p, y):    "pay owe[p] from cash[p], person arrives at y"
+    tasks:
+      travel(p, y): "get person p to location y by any available means"
+    methods:
+      tm_do_nothing:       "no-op if p is already at y"
+      tm_travel_by_foot:   "walk if dist <= 2"
+      tm_travel_by_taxi:   "call+ride+pay if cash >= fare"
+
+  blocks_world:
+    tool: plan_blocks_world
+    type: goal-based (MultiGoal)
+    entities:
+      blocks_problem_1: [a, b, c]
+      blocks_problem_2: [a, b, c, d]
+      blocks_problem_3: "integers 1..19"
+    state_variables:
+      pos:     "dict[block -> block|'table'] — what each block is resting on"
+      clear:   "dict[block -> bool]          — whether the top surface is clear"
+      holding: "dict['hand' -> block|False]  — what the hand is holding"
+    actions:
+      a_pickup(b):    "pick up block b from table; precondition: clear[b], not holding"
+      a_unstack(b,c): "unstack b from c; precondition: pos[b]==c, clear[b], not holding"
+      a_putdown(b):   "put held block b on table"
+      a_stack(b,c):   "stack held block b on top of c; precondition: clear[c]"
+    tasks:
+      move_blocks(goal): "rearrange all blocks to satisfy MultiGoal"
+      move_one(b, dest): "move one block b to destination"
+      get(b):            "pick up or unstack block b into hand"
+      put(b, dest):      "place block b onto dest (table or another block)"
+    problems:
+      "1a": "init_state_1 → goal1a (3 blocks, full goal: c on b on a)"
+      "1b": "init_state_1 → goal1b (3 blocks, partial goal: c on b on a)"
+      "2a": "init_state_2 → goal2a (4 blocks, full goal)"
+      "2b": "init_state_2 → goal2b (4 blocks, partial goal)"
+      "3":  "init_state_3 → goal3  (19 blocks, large rearrangement)"
+
+  rescue:
+    tool: plan_rescue
+    type: task-based
+    entities:
+      wheeled_robots: [r1, w1]
+      drones: [a1]
+      persons: [p1]
+    state_variables:
+      loc:           "dict[entity -> (x,y)] — grid position"
+      robot_type:    "dict[robot -> 'wheeled'|'uav']"
+      has_medicine:  "dict[robot -> int]"
+      status:        "dict[entity|loc -> 'free'|'injured'|'unk'|'clear']"
+      altitude:      "dict[drone -> 'high'|'low']"
+      current_image: "dict[drone -> image|None]"
+      rigid.obstacles:     "set of (x,y) tuples"
+      rigid.wheeled_robots: "tuple of wheeled robot ids"
+      rigid.drones:         "tuple of drone ids"
+    actions:
+      a_move_euclidean(r,l,l_,dist): "move wheeled robot r from l to l_ (straight path)"
+      a_move_manhattan(r,l,l_,dist): "move wheeled robot r (manhattan path)"
+      a_move_curved(r,l,l_,dist):    "move wheeled robot r (curved path)"
+      a_move_fly(r,l,l_):            "fly drone r from l to l_"
+      a_change_altitude(r,alt):      "change drone r altitude to 'high' or 'low'"
+      a_capture_image(r,camera,l):   "capture image at location l"
+      a_inspect_person(r,p):         "inspect person p"
+      a_support_person(r,p):         "administer medicine to person p"
+      a_inspect_location(r,l):       "inspect location l for hazards"
+      a_replenish_supplies(r):       "replenish medicine supplies for robot r"
+      a_engage_robot(r):             "mark robot r as engaged/active"
+      a_free_robot(r):               "release robot r back to free status"
+      a_check_real(l):               "verify real status of location l"
+    tasks:
+      move_task(r, l):        "move robot r to location l"
+      survey_task(r, l):      "survey location l using robot/drone r"
+      rescue_task(r, p):      "rescue person p using robot r"
+      help_person_task(r, p): "help injured person p"
+      get_supplies_task(r):   "get medicine supplies for robot r"
+
+  robosub:
+    tool: plan_robosub
+    type: task-based
+    entities:
+      robot: [r]
+      torpedoes: [t1, t2]
+      locations: [l0, l1, l2, l3, l4, l5]
+      objects: [g, gm1, gm2, cm1, cm2, gp1, gp2, v1, v2, c1, ap1, ap2, d1, s1]
+    state_variables:
+      loc:              "dict[entity -> location] — current position"
+      found:            "dict[entity|loc -> bool]  — whether object/zone is found"
+      crossed_gate:     "dict[gate -> bool]"
+      traversed_path:   "dict[guide_path -> bool]"
+      vampire_touched:  "dict[vampire -> bool]"
+      coffin_filled:    "dict[coffin -> list]      — garlic items dropped in"
+      staked_dracula:   "dict[dracula -> list]     — torpedoes used"
+      decapitated:      "dict[dracula -> bool]"
+      surfaced:         "dict[robot -> bool]"
+      rigid.adj:        "dict[loc -> list[loc]]    — adjacency graph"
+      rigid.type:       "dict[entity -> type_str]  — object type labels"
+    actions:
+      a_search_for(loc):       "search zone to reveal adjacent objects"
+      a_localize(obj):         "localize a specific object"
+      a_localize_ap(ap):       "localize acoustic pinger ap"
+      a_move(loc):             "move robot to adjacent location"
+      a_cross_gate_40(gate):   "cross gate scoring 40 points"
+      a_cross_gate_60(gate):   "cross gate scoring 60 points"
+      a_pick(obj):             "pick up object"
+      a_trace_guide_path(gp):  "follow guide path"
+      a_touch_back_v(v):       "touch back of vampire"
+      a_touch_front_v(v):      "touch front of vampire"
+      a_open_c(coffin):        "open coffin"
+      a_drop_garlic_open_coffin(gm,c):   "drop garlic into open coffin"
+      a_drop_garlic_closed_coffin(gm,c): "drop garlic into closed coffin"
+      a_decap_d(d):            "decapitate dracula"
+      a_stake_decap_d(t,d):    "stake decapitated dracula with torpedo t"
+      a_stake_norm_d(t,d):     "stake normal dracula with torpedo t"
+      a_surface(cm,s):         "surface at surfacing zone s with coffin marker cm"
+    tasks:
+      pinger_task():           "locate acoustic pingers (ap1, ap2)"
+      main_task(loc_list):     "complete all objectives in each zone in loc_list"
+      move_task(loc):          "navigate to location"
+      cross_gate_task(gate):   "cross gate"
+      pick_task(obj):          "pick up object"
+      trace_path_task(gp):     "trace guide path"
+      slay_vampire_task(v):    "slay vampire"
+      drop_garlic_task(gm,c):  "drop garlic in coffin"
+      stake_heart_task(t,d):   "stake dracula's heart"
+      surface_task(s):         "surface at zone"
+
+  healthcare:
+    tool: plan_healthcare
+    type: task-based, temporal
+    temporal: true
+    origin_time: "2025-01-15T08:00:00Z"
+    entities:
+      rooms: [OR1, OR2, OR3]
+      patients: [patient1, patient2, patient3]
+      surgery_types: [cardiac, orthopedic]
+    state_variables:
+      room_status:          "dict[room -> 'available'|'cleaned'|'occupied']"
+      room_equipment:       "dict[room -> surgery_type]"
+      patient_location:     "dict[patient -> room]"
+      patient_surgery_type: "dict[patient -> surgery_type]"
+      surgery_complete:     "dict[patient -> bool]"
+    actions:
+      a_prepare_room(room, surgery_type): "prepare room; duration PT30M"
+      a_perform_surgery(patient, room, surgery_type): "perform surgery; duration PT2H"
+      a_recover_patient(patient, room):   "patient recovery; duration PT15M"
+      a_clean_room(room):                 "clean room after surgery; duration PT20M"
+    tasks:
+      schedule_surgery(patient, room, surgery_type): "schedule full surgical workflow for patient"
+    methods:
+      tm_schedule_surgery:        "full workflow: prepare → surgery → recover → clean"
+      tm_schedule_simple_surgery: "simplified workflow for pre-cleaned rooms"
+
+  temporal_travel:
+    tool: plan_temporal_travel
+    type: task-based, temporal
+    temporal: true
+    origin_time: "2025-01-01T10:00:00Z"
+    note: "same domain as simple_travel with ISO-8601 timestamps on every action"
+    entities:
+      persons: [alice, bob]
+      locations: [home_a, home_b, park, station, downtown]
+      taxis: [taxi1, taxi2]
+    state_variables:
+      loc:  "dict[entity -> location]"
+      cash: "dict[person -> float]"
+      owe:  "dict[person -> float]"
+      rigid.types: "dict[type -> list]"
+      rigid.dist:  "dict[tuple(loc,loc) -> int]"
+    actions:
+      a_walk(p, x, y):    "walk; duration PT5M per unit distance"
+      a_call_taxi(p, x):  "call taxi; duration PT0S (instant)"
+      a_ride_taxi(p, y):  "ride taxi; duration PT10M"
+      a_pay_driver(p, y): "pay driver; duration PT0S (instant)"
+    tasks:
+      travel(p, y): "get person p to location y"

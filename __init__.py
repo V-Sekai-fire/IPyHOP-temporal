@@ -16,10 +16,14 @@ _TOOLS = [
             "name": "plan_simple_travel",
             "description": (
                 "HTN planner: simple travel domain. "
-                "Finds a plan for one or more people to travel to destinations using walking or taxis. "
-                "Chooses walking if the distance is ≤2, taxi otherwise (if the person has enough cash). "
-                "People: alice (home_a, $20), bob (home_b, $15). "
-                "Locations: home_a, home_b, park, station, downtown."
+                "Finds a plan for one or more people to travel to destinations by walking or taxi. "
+                "Walking chosen when dist(x,y) <= 2; taxi when cash >= fare (1.5 + 0.5*dist). "
+                "Persons: alice (starts home_a, cash=$20), bob (starts home_b, cash=$15). "
+                "Locations: home_a, home_b, park, station, downtown. "
+                "Taxis: taxi1 (starts park), taxi2 (starts station). "
+                "State variables: loc (position), cash, owe. "
+                "Actions: a_walk(p,x,y), a_call_taxi(p,x), a_ride_taxi(p,y), a_pay_driver(p,y). "
+                "Task: travel(p, destination)."
             ),
             "parameters": {
                 "type": "object",
@@ -28,6 +32,8 @@ _TOOLS = [
                         "type": "array",
                         "description": (
                             "List of travel tasks. Each task is [\"travel\", person, destination]. "
+                            "Persons: alice, bob. "
+                            "Destinations: home_a, home_b, park, station, downtown. "
                             "Default: [[\"travel\", \"alice\", \"park\"]]"
                         ),
                         "items": {"type": "array"},
@@ -44,9 +50,15 @@ _TOOLS = [
             "name": "plan_blocks_world",
             "description": (
                 "HTN planner: blocks world domain. "
-                "Finds a plan to rearrange blocks on a table to match a goal configuration. "
-                "Problems: 1a (3 blocks, full goal), 1b (3 blocks, partial goal), "
-                "2a (4 blocks, full goal), 2b (4 blocks, partial goal), 3 (19 blocks, large problem)."
+                "Rearranges blocks on a table to match a MultiGoal configuration using a robotic hand. "
+                "State variables: pos (block -> block|'table'), clear (block -> bool), holding (hand -> block|False). "
+                "Actions: a_pickup(b), a_unstack(b,c), a_putdown(b), a_stack(b,c). "
+                "Tasks: move_blocks(goal), move_one(b,dest), get(b), put(b,dest). "
+                "Problems — 1a: 3 blocks [a,b,c], full goal (c on b on a, hand empty); "
+                "1b: 3 blocks, partial goal (c on b on a); "
+                "2a: 4 blocks [a,b,c,d], full goal; "
+                "2b: 4 blocks, partial goal; "
+                "3: 19 blocks, large rearrangement."
             ),
             "parameters": {
                 "type": "object",
@@ -67,9 +79,14 @@ _TOOLS = [
             "name": "plan_rescue",
             "description": (
                 "HTN planner: rescue domain. "
-                "Coordinates robots and drones to locate and assist an injured person. "
-                "Tasks: 'move' (robot r1 moves to location (5,5)) or "
-                "'survey' (drone a1 surveys location (2,2) to check for injured persons)."
+                "Coordinates wheeled robots (r1, w1) and a drone (a1) to locate and assist injured person p1 on a 2D grid. "
+                "State variables: loc (entity->(x,y)), robot_type, has_medicine, status, altitude, current_image. "
+                "Actions: a_move_euclidean/manhattan/curved(r,l,l_,dist), a_move_fly(r,l,l_), "
+                "a_change_altitude(r,alt), a_capture_image(r,camera,l), a_inspect_person(r,p), "
+                "a_support_person(r,p), a_inspect_location(r,l), a_replenish_supplies(r), "
+                "a_engage_robot(r), a_free_robot(r), a_check_real(l). "
+                "Tasks: move_task(r,l), survey_task(r,l), rescue_task(r,p), help_person_task(r,p), get_supplies_task(r). "
+                "Variants: 'move' (r1 moves to (5,5)), 'survey' (a1 surveys (2,2) for p1)."
             ),
             "parameters": {
                 "type": "object",
@@ -90,8 +107,18 @@ _TOOLS = [
             "name": "plan_robosub",
             "description": (
                 "HTN planner: underwater robot (RoboSub) domain. "
-                "Navigates an autonomous underwater vehicle through a series of competition zones. "
-                "Tasks: 'full' (all 5 zones in one task list) or 'staged' (each zone as a separate task)."
+                "Navigates an AUV through 5 competition zones (l1-l5) completing objectives in each. "
+                "Entities: robot r, torpedoes t1/t2, zones l0-l5, gate g, garlic markers gm1/gm2, "
+                "coffin markers cm1/cm2, guide paths gp1/gp2, vampires v1/v2, coffin c1, "
+                "acoustic pingers ap1/ap2, dracula d1, surfacing zone s1. "
+                "State variables: loc, found, crossed_gate, traversed_path, vampire_touched, "
+                "coffin_filled, staked_dracula, decapitated, surfaced, rigid.adj, rigid.type. "
+                "Actions: a_search_for(loc), a_localize(obj), a_localize_ap(ap), a_move(loc), "
+                "a_cross_gate_40/60(gate), a_pick(obj), a_trace_guide_path(gp), "
+                "a_touch_back/front_v(v), a_open_c(c), a_drop_garlic_open/closed_coffin(gm,c), "
+                "a_decap_d(d), a_stake_decap/norm_d(t,d), a_surface(cm,s). "
+                "Top-level tasks: pinger_task(), main_task(loc_list). "
+                "Variants: 'full' (single task list for all zones), 'staged' (one task per zone)."
             ),
             "parameters": {
                 "type": "object",
@@ -112,9 +139,16 @@ _TOOLS = [
             "name": "plan_healthcare",
             "description": (
                 "HTN temporal planner: healthcare scheduling domain. "
-                "Schedules surgeries in operating rooms with temporal constraints (start/end times). "
-                "Tasks: 'single' (patient1 in OR1), 'two' (patient1 + patient2), "
-                "'shared_room' (patient1 + patient3 competing for cardiac rooms)."
+                "Schedules surgical workflows in operating rooms with ISO-8601 start/end times per action. "
+                "Origin time: 2025-01-15T08:00:00Z. "
+                "Rooms: OR1 (cardiac), OR2 (orthopedic), OR3 (cardiac, pre-cleaned). "
+                "Patients: patient1 (cardiac/OR1), patient2 (orthopedic/OR2), patient3 (cardiac/OR3). "
+                "State variables: room_status, room_equipment, patient_location, patient_surgery_type, surgery_complete. "
+                "Actions (all temporal): a_prepare_room(room,surgery_type) PT30M, "
+                "a_perform_surgery(patient,room,surgery_type) PT2H, "
+                "a_recover_patient(patient,room) PT15M, a_clean_room(room) PT20M. "
+                "Task: schedule_surgery(patient, room, surgery_type). "
+                "Variants: 'single' (patient1/OR1), 'two' (patient1+2), 'shared_room' (patient1+3 both cardiac)."
             ),
             "parameters": {
                 "type": "object",
@@ -135,8 +169,11 @@ _TOOLS = [
             "name": "plan_temporal_travel",
             "description": (
                 "HTN temporal planner: simple travel with ISO-8601 timestamps. "
-                "Same travel domain as plan_simple_travel but each action includes "
-                "start_time and end_time in the result. Origin time: 2025-01-01T10:00:00Z."
+                "Same domain as plan_simple_travel — persons alice/bob, locations home_a/home_b/park/station/downtown. "
+                "Each action carries start_time and end_time. Origin time: 2025-01-01T10:00:00Z. "
+                "Action durations: a_call_taxi PT0S, a_ride_taxi PT10M, a_pay_driver PT0S, a_walk PT5M. "
+                "State variables: loc, cash, owe, rigid.types, rigid.dist. "
+                "Task: travel(p, destination)."
             ),
             "parameters": {
                 "type": "object",
@@ -145,6 +182,7 @@ _TOOLS = [
                         "type": "array",
                         "description": (
                             "List of travel tasks. Each task is [\"travel\", person, destination]. "
+                            "Persons: alice, bob. Destinations: home_a, home_b, park, station, downtown. "
                             "Default: [[\"travel\", \"alice\", \"park\"]]"
                         ),
                         "items": {"type": "array"},
