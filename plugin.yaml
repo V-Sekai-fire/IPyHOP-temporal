@@ -7,7 +7,7 @@ description: >
 domains:
 
   simple_travel:
-    tool: plan_simple_travel
+    tool: plan_sample_simple_travel
     type: task-based
     entities:
       persons: [alice, bob]
@@ -32,7 +32,7 @@ domains:
       tm_travel_by_taxi:   "call+ride+pay if cash >= fare"
 
   blocks_world:
-    tool: plan_blocks_world
+    tool: plan_sample_blocks_world
     type: goal-based (MultiGoal)
     entities:
       blocks_problem_1: [a, b, c]
@@ -60,7 +60,7 @@ domains:
       "3":  "init_state_3 → goal3  (19 blocks, large rearrangement)"
 
   rescue:
-    tool: plan_rescue
+    tool: plan_sample_rescue
     type: task-based
     entities:
       wheeled_robots: [r1, w1]
@@ -98,7 +98,7 @@ domains:
       get_supplies_task(r):   "get medicine supplies for robot r"
 
   robosub:
-    tool: plan_robosub
+    tool: plan_sample_robosub
     type: task-based
     entities:
       robot: [r]
@@ -148,7 +148,7 @@ domains:
       surface_task(s):         "surface at zone"
 
   healthcare:
-    tool: plan_healthcare
+    tool: plan_sample_healthcare
     type: task-based, temporal
     temporal: true
     origin_time: "2025-01-15T08:00:00Z"
@@ -174,7 +174,7 @@ domains:
       tm_schedule_simple_surgery: "simplified workflow for pre-cleaned rooms"
 
   temporal_travel:
-    tool: plan_temporal_travel
+    tool: plan_sample_temporal_travel
     type: task-based, temporal
     temporal: true
     origin_time: "2025-01-01T10:00:00Z"

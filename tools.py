@@ -93,6 +93,22 @@ def _serialize_val(v):
     return v
 
 
+
+def _recursive_json_parse(obj):
+    """Recursively parse JSON strings in nested structures."""
+    import json
+    if isinstance(obj, str):
+        try:
+            parsed = json.loads(obj)
+            return _recursive_json_parse(parsed)
+        except (json.JSONDecodeError, ValueError):
+            return obj
+    elif isinstance(obj, dict):
+        return {k: _recursive_json_parse(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_recursive_json_parse(item) for item in obj]
+    return obj
+
 def _serialize_state(s) -> dict:
     """Serialize a State snapshot to a JSON-safe dict, stringifying tuple keys."""
     result = {}
@@ -169,6 +185,7 @@ def handle_blocks_world(args: dict, **kwargs) -> str:
       tasks   — optional list override: pass a MultiGoal-like dict or task tuples
                 e.g. [{"__multigoal__": true, "goal_tag": "g", "pos": {"a": "b"}}]
     """
+
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.blocks_world.task_based.blocks_world_actions import actions
@@ -177,10 +194,13 @@ def handle_blocks_world(args: dict, **kwargs) -> str:
         from examples.blocks_world.goal_based.blocks_world_actions import actions as gb_actions
         import examples.blocks_world.task_based.blocks_world_problem as prob
         from ipyhop import IPyHOP, MultiGoal
+        import json
 
+        # Parse state if it's a string (Hermes may pass JSON as string)
+        state_data = _recursive_json_parse(args.get("state"))
         # Build state
-        if args.get("state"):
-            init_state = _build_state(args["state"])
+        if state_data:
+            init_state = _build_state(state_data)
         else:
             problem = str(args.get("problem", "1b")).strip()
             problem_map = {
@@ -195,11 +215,14 @@ def handle_blocks_world(args: dict, **kwargs) -> str:
             state_name, goal_name = problem_map[problem]
             init_state = getattr(prob, state_name)
 
+        # Parse tasks if it's a string (Hermes may pass JSON as string)
+        tasks_data = _recursive_json_parse(args.get("tasks"))
+
         # Build task list — detect if any MultiGoal dicts are present
         has_multigoal = False
-        if args.get("tasks"):
+        if tasks_data:
             task_list = []
-            for t in params["tasks"]:
+            for t in tasks_data:
                 if isinstance(t, dict) and t.get("__multigoal__"):
                     has_multigoal = True
                     mg = MultiGoal(t.get("name", "custom_goal"))
@@ -228,7 +251,7 @@ def handle_blocks_world(args: dict, **kwargs) -> str:
         chosen_actions = gb_actions if has_multigoal else actions
         planner = IPyHOP(chosen_methods, chosen_actions)
         plan = planner.plan(init_state, task_list, verbose=0)
-        note = args.get("note") or (f"problem={args.get('problem','1b')}" if not args.get("state") else "custom")
+        note = args.get("note") or (f"problem={args.get('problem','1b')}" if not state_data else "custom")
         return json.dumps(_result(planner, plan, init_state, note=note))
     except Exception as exc:
         return json.dumps({"error": str(exc)})

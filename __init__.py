@@ -11,9 +11,9 @@ from .tools import (
 
 _TOOLS = [
     (
-        "plan_simple_travel",
+        "plan_sample_simple_travel",
         {
-            "name": "plan_simple_travel",
+            "name": "plan_sample_simple_travel",
             "description": (
                 "Plan travel routes for people in a simple city domain. "
                 "Use when you need to find a sequence of actions (walk or taxi) to move people between locations. "
@@ -37,16 +37,17 @@ _TOOLS = [
         handle_simple_travel,
     ),
     (
-        "plan_blocks_world",
+        "plan_sample_blocks_world",
         {
-            "name": "plan_blocks_world",
+            "name": "plan_sample_blocks_world",
             "description": (
                 "Solve block-stacking puzzles using a robotic hand. "
                 "Use when you need to rearrange blocks to achieve a goal configuration. "
                 "Handles pickup, unstack, putdown, stack with preconditions (only clear blocks, only on clear surfaces). "
                 "Returns action sequences to transform initial to goal state. "
                 "Problems: 1a/1b (3 blocks), 2a/2b (4 blocks), 3 (19 blocks). "
-                "Use for classical planning with physical constraints and ordering dependencies."
+                "Use for classical planning with physical constraints and ordering dependencies. "
+                "Supports custom states and goals via state and tasks parameters for testing impossible configurations."
             ),
             "parameters": {
                 "type": "object",
@@ -55,6 +56,29 @@ _TOOLS = [
                         "type": "string",
                         "description": "Problem identifier: '1a', '1b', '2a', '2b', or '3'. Default: '1b'.",
                     },
+                    "state": {
+                        "type": "object",
+                        "description": "Custom initial state override. Format: {'pos': {block: position, ...}, 'clear': {block: bool, ...}, 'holding': {'hand': bool}}. Position can be another block or 'table'.",
+                        "properties": {
+                            "pos": {
+                                "type": "object",
+                                "description": "Map of block -> position (another block or 'table')",
+                            },
+                            "clear": {
+                                "type": "object",
+                                "description": "Map of block -> boolean (is block clear)",
+                            },
+                            "holding": {
+                                "type": "object",
+                                "description": "Map of 'hand' -> boolean (is hand holding something)",
+                            },
+                        },
+                    },
+                    "tasks": {
+                        "type": "array",
+                        "description": "Custom goal tasks. For MultiGoal: [{'__multigoal__': true, 'goal_tag': 'name', 'pos': {...}, 'clear': {...}, 'holding': {...}}]. For simple tasks: [['task_name', arg1, arg2], ...].",
+                        "items": {},
+                    },
                 },
                 "required": [],
             },
@@ -62,9 +86,9 @@ _TOOLS = [
         handle_blocks_world,
     ),
     (
-        "plan_rescue",
+        "plan_sample_rescue",
         {
-            "name": "plan_rescue",
+            "name": "plan_sample_rescue",
             "description": (
                 "Coordinate multi-robot rescue operations with wheeled robots and drones. "
                 "Use when planning search-and-rescue with heterogeneous robot capabilities. "
@@ -87,9 +111,9 @@ _TOOLS = [
         handle_rescue,
     ),
     (
-        "plan_robosub",
+        "plan_sample_robosub",
         {
-            "name": "plan_robosub",
+            "name": "plan_sample_robosub",
             "description": (
                 "Plan underwater robot missions for AUV competitions. "
                 "Use when navigating through multiple zones with objectives: cross gates, pick objects, trace paths, "
@@ -112,9 +136,9 @@ _TOOLS = [
         handle_robosub,
     ),
     (
-        "plan_healthcare",
+        "plan_sample_healthcare",
         {
-            "name": "plan_healthcare",
+            "name": "plan_sample_healthcare",
             "description": (
                 "Schedule surgical procedures in operating rooms with temporal constraints. "
                 "Use when creating time-aware surgery schedules respecting room availability and equipment. "
@@ -136,9 +160,9 @@ _TOOLS = [
         handle_healthcare,
     ),
     (
-        "plan_temporal_travel",
+        "plan_sample_temporal_travel",
         {
-            "name": "plan_temporal_travel",
+            "name": "plan_sample_temporal_travel",
             "description": (
                 "Plan travel routes with explicit timing information. "
                 "Same domain as plan_simple_travel but returns temporally-annotated actions with ISO-8601 start/end times. "
@@ -161,9 +185,9 @@ _TOOLS = [
         handle_temporal_travel,
     ),
     (
-        "plan_replan",
+        "plan_sample_replan",
         {
-            "name": "plan_replan",
+            "name": "plan_sample_replan",
             "description": (
                 "Generate alternative plan after a previous plan failed during execution. "
                 "Use when you have session_id from prior planning and an action failed at runtime. "
@@ -194,9 +218,9 @@ _TOOLS = [
         handle_replan,
     ),
     (
-        "plan_simulate",
+        "plan_sample_simulate",
         {
-            "name": "plan_simulate",
+            "name": "plan_sample_simulate",
             "description": (
                 "Step through a plan to see how world state changes after each action. "
                 "Use to verify plans, debug failures, or understand intermediate states. "
