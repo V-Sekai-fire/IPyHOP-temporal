@@ -1,4 +1,5 @@
 from typing import Any
+import json
 
 from ._common import _add_paths, _remove_paths, _build_state, _result, _recursive_json_parse, PLAN_DIR, EXAMPLES
 
@@ -11,7 +12,7 @@ _PROBLEM_MAP: dict[str, tuple[str, str]] = {
 }
 
 
-def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> str:
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.blocks_world.task_based.blocks_world_actions import actions
@@ -28,7 +29,7 @@ def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]
             init_state = _build_state(state_data)
         else:
             if problem not in _PROBLEM_MAP:
-                return {"error": f"'problem' must be one of {sorted(_PROBLEM_MAP)}"}
+                return json.dumps({"error": f"'problem' must be one of {sorted(_PROBLEM_MAP)}"})
             state_name, _ = _PROBLEM_MAP[problem]
             init_state = getattr(prob, state_name)
 
@@ -60,6 +61,6 @@ def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]
         note: str = params.get("note") or (f"problem={params.get('problem','1b')}" if not state_data else "custom")
         return _result(planner, plan, init_state, note=note)
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)

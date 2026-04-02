@@ -1,9 +1,10 @@
 from typing import Any
+import json
 
 from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR, EXAMPLES
 
 
-def handle_healthcare(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+def handle_healthcare(params: dict[str, Any], **kwargs: Any) -> str:
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.healthcare_scheduling.task_based.healthcare_domain import actions, methods
@@ -23,7 +24,7 @@ def handle_healthcare(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
                 "shared_room": "task_list_3",
             }
             if task not in task_map:
-                return {"error": f"'task' must be one of {sorted(task_map)}"}
+                return json.dumps({"error": f"'task' must be one of {sorted(task_map)}"})
             tasks = getattr(prob, task_map[task])
 
         planner = IPyHOP(methods, actions)
@@ -31,6 +32,6 @@ def handle_healthcare(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         note: str = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','single')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)

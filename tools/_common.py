@@ -1,7 +1,7 @@
 import sys
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 PLAN_DIR: Path = Path(__file__).parent.parent
 EXAMPLES: Path = PLAN_DIR / "examples"
@@ -97,7 +97,7 @@ def _serialize_state(s: Any) -> dict[str, Any]:
     return result
 
 
-def _result(planner: Any, plan: list, init_state: Any, note: str | None = None) -> dict[str, Any]:
+def _result(planner: Any, plan: list, init_state: Any, note: Union[str, None] = None) -> str:
     plan = plan or []
     r: dict[str, Any] = {
         "plan":       _plan_to_json(plan),
@@ -106,4 +106,4 @@ def _result(planner: Any, plan: list, init_state: Any, note: str | None = None) 
     }
     if note:
         r["note"] = note
-    return r
+    return json.dumps(r, ensure_ascii=False)

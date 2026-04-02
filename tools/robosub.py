@@ -1,9 +1,10 @@
 from typing import Any
+import json
 
 from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR, EXAMPLES
 
 
-def handle_robosub(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+def handle_robosub(params: dict[str, Any], **kwargs: Any) -> str:
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.robosub.domain.robosub_mod_actions import actions
@@ -21,7 +22,7 @@ def handle_robosub(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         else:
             task: str = str(params.get("task", "full")).strip()
             if task not in ("full", "staged"):
-                return {"error": "'task' must be 'full' or 'staged'"}
+                return json.dumps({"error": "'task' must be 'full' or 'staged'"})
             tasks = task_list_1 if task == "full" else task_list_2
 
         planner = IPyHOP(methods, actions)
@@ -29,6 +30,6 @@ def handle_robosub(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         note: str = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','full')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)

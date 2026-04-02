@@ -1,16 +1,17 @@
 from typing import Any
+import json
 
 from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR, EXAMPLES
 
 
-def handle_temporal_travel(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+def handle_temporal_travel(params: dict[str, Any], **kwargs: Any) -> str:
     tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
-        return {"error": "tasks must be a list"}
+        return json.dumps({"error": "tasks must be a list"})
     tasks: list[tuple] = []
     for item in tasks_raw:
         if not isinstance(item, (list, tuple)) or len(item) < 2:
-            return {"error": f"each task must be [name, arg, ...], got {item!r}"}
+            return json.dumps({"error": f"each task must be [name, arg, ...], got {item!r}"})
         tasks.append(tuple(item))
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
@@ -22,6 +23,6 @@ def handle_temporal_travel(params: dict[str, Any], **kwargs: Any) -> dict[str, A
         plan = planner.plan(state, tasks, verbose=0)
         return _result(planner, plan, state)
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)

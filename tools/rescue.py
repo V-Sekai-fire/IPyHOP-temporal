@@ -1,9 +1,10 @@
 from typing import Any
+import json
 
 from ._common import _add_paths, _remove_paths, _build_state, _result, PLAN_DIR, EXAMPLES
 
 
-def handle_rescue(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+def handle_rescue(params: dict[str, Any], **kwargs: Any) -> str:
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.rescue.domain.rescue_actions import actions
@@ -26,7 +27,7 @@ def handle_rescue(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
                 "survey": [("survey_task", "a1", (2, 2))],
             }
             if task not in task_map:
-                return {"error": f"'task' must be one of {sorted(task_map)}"}
+                return json.dumps({"error": f"'task' must be one of {sorted(task_map)}"})
             tasks = task_map[task]
 
         planner = IPyHOP(methods, actions)
@@ -34,6 +35,6 @@ def handle_rescue(params: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         note: str = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','survey')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
-        return {"error": str(exc)}
+        return json.dumps({"error": str(exc)})
     finally:
         _remove_paths(added)
