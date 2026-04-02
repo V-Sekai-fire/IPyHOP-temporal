@@ -13,6 +13,55 @@ _PROBLEM_MAP: dict[str, tuple[str, str]] = {
 
 
 def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> str:
+    """
+    Solve block-stacking puzzles using HTN (Hierarchical Task Network) planning.
+    
+    Supports 5 standard problems (1a, 1b, 2a, 2b, 3) with block counts from 3 to 19,
+    or custom initial states and goals.
+    
+    Args:
+        params: Dictionary containing optional keys:
+            - problem: str (internal, default "1b") - problem variant
+            - state: dict[str, Any] | None
+                Custom initial state with schema:
+                {
+                    "pos": dict[str, str],           # block -> (block_id | "table")
+                    "clear": dict[str, bool],        # block -> is_clear
+                    "holding": dict[str, str | bool] # {"hand": block_id | False}
+                }
+                If None, uses default state for problem.
+            - tasks: list[dict | list] | None
+                Custom goals in MultiGoal format:
+                [
+                    {
+                        "__multigoal__": True,
+                        "goal_tag": "custom_goal",
+                        "pos": {...},
+                        "clear": {...},
+                        ...other state constraints...
+                    }
+                ]
+                If None, uses default goal for problem.
+            - note: str | None - optional description for output
+        **kwargs: Additional keyword arguments (unused)
+    
+    Returns:
+        str: JSON-serialized dict with keys:
+            - plan: list[list] - sequence of actions to execute
+            - steps: int - total number of actions
+            - iterations: int - planner iterations used
+            - note: str | None - optional problem identifier
+    
+    Example:
+        >>> result = handle_blocks_world({
+        ...     "problem": "1a",
+        ...     "state": None,
+        ...     "tasks": None
+        ... })
+        >>> import json
+        >>> output = json.loads(result)
+        >>> print(f"Plan has {output['steps']} steps")
+    """
     added = _add_paths(PLAN_DIR, EXAMPLES)
     try:
         from examples.blocks_world.task_based.blocks_world_actions import actions
@@ -29,7 +78,7 @@ def handle_blocks_world(params: dict[str, Any], **kwargs: Any) -> str:
             init_state = _build_state(state_data)
         else:
             if problem not in _PROBLEM_MAP:
-                return json.dumps({"error": f"'problem' must be one of {sorted(_PROBLEM_MAP)}"})
+                return json.dumps({"error": "invalid problem type; see documentation"})
             state_name, _ = _PROBLEM_MAP[problem]
             init_state = getattr(prob, state_name)
 
