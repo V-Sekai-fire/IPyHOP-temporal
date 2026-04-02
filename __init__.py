@@ -5,8 +5,6 @@ from .tools import (
    handle_robosub,
    handle_healthcare,
    handle_temporal_travel,
-   handle_replan,
-   handle_simulate,
 )
 
 _TOOLS = [
@@ -184,71 +182,10 @@ _TOOLS = [
         },
         handle_temporal_travel,
     ),
-    (
-        "plan_sample_replan",
-        {
-            "name": "plan_sample_replan",
-            "description": (
-                "Generate alternative plan after a previous plan failed during execution. "
-                "Use when you have session_id from prior planning and an action failed at runtime. "
-                "Provides failed node ID and optionally blacklists actions to avoid. "
-                "Returns revised plan that works around the failure. "
-                "Use for dynamic replanning in uncertain environments where preconditions change."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "session_id": {
-                        "type": "string",
-                        "description": "session_id from a prior plan_* call.",
-                    },
-                    "fail_node_id": {
-                        "type": "integer",
-                        "description": "Node ID in the solution tree that failed.",
-                    },
-                    "blacklist": {
-                        "type": "array",
-                        "description": 'Optional list of action tuples to avoid. E.g. [["a_walk", "alice", "home_a", "park"]].',
-                        "items": {"type": "array"},
-                    },
-                },
-                "required": [],
-            },
-        },
-        handle_replan,
-    ),
-    (
-        "plan_sample_simulate",
-        {
-            "name": "plan_sample_simulate",
-            "description": (
-                "Step through a plan to see how world state changes after each action. "
-                "Use to verify plans, debug failures, or understand intermediate states. "
-                "Returns sequence of state snapshots showing loc, cash, pos, clear, etc. after each action. "
-                "Use for plan verification, debugging, and educational purposes."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "session_id": {
-                        "type": "string",
-                        "description": "session_id from a prior plan_* or plan_replan call.",
-                    },
-                    "start_index": {
-                        "type": "integer",
-                        "description": "Step index to start simulation from. Default: 0 (full plan).",
-                    },
-                },
-                "required": [],
-            },
-        },
-        handle_simulate,
-    ),
 ]
 
 
 def register(ctx):
-    plugin_name = ctx.manifest.name
     for name, schema, handler in _TOOLS:
-        ctx.register_tool(name, plugin_name, schema, handler)
+        ctx.register_tool(name, schema, handler)
 

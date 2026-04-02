@@ -145,7 +145,7 @@ def handle_simple_travel(params: dict, **kwargs) -> dict:
                    default: [[\"travel\", \"alice\", \"park\"]]
       state      — optional dict override for the initial state
     """
-    tasks_raw = args.get("tasks") or [["travel", "alice", "park"]]
+    tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
         return {"error": "tasks must be a list"}
     tasks = []
@@ -158,7 +158,7 @@ def handle_simple_travel(params: dict, **kwargs) -> dict:
         from examples.simple_travel.task_based.simple_travel_domain import actions, methods
         from examples.simple_travel.task_based.simple_travel_problem import init_state
         from ipyhop import IPyHOP
-        state = _build_state(args["state"]) if args.get("state") else init_state
+        state = _build_state(params["state"]) if params.get("state") else init_state
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
         return _result(planner, plan, state)
@@ -190,12 +190,12 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
         import examples.blocks_world.task_based.blocks_world_problem as prob
         from ipyhop import IPyHOP, MultiGoal
         # Parse state if it's a string (Hermes may pass JSON as string)
-        state_data = _recursive_json_parse(args.get("state"))
+        state_data = _recursive_json_parse(params.get("state"))
         # Build state
         if state_data:
             init_state = _build_state(state_data)
         else:
-            problem = str(args.get("problem", "1b")).strip()
+            problem = str(params.get("problem", "1b")).strip()
             problem_map = {
                 "1a": ("init_state_1", "goal1a"),
                 "1b": ("init_state_1", "goal1b"),
@@ -209,7 +209,7 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
             init_state = getattr(prob, state_name)
 
         # Parse tasks if it's a string (Hermes may pass JSON as string)
-        tasks_data = _recursive_json_parse(args.get("tasks"))
+        tasks_data = _recursive_json_parse(params.get("tasks"))
 
         # Build task list — detect if any MultiGoal dicts are present
         has_multigoal = False
@@ -227,7 +227,7 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
                 else:
                     task_list.append(tuple(t))
         else:
-            problem = str(args.get("problem", "1b")).strip()
+            problem = str(params.get("problem", "1b")).strip()
             problem_map = {
                 "1a": ("init_state_1", "goal1a"),
                 "1b": ("init_state_1", "goal1b"),
@@ -244,7 +244,7 @@ def handle_blocks_world(params: dict, **kwargs) -> dict:
         chosen_actions = gb_actions if has_multigoal else actions
         planner = IPyHOP(chosen_methods, chosen_actions)
         plan = planner.plan(init_state, task_list, verbose=0)
-        note = args.get("note") or (f"problem={args.get('problem','1b')}" if not state_data else "custom")
+        note = params.get("note") or (f"problem={params.get('problem','1b')}" if not state_data else "custom")
         return _result(planner, plan, init_state, note=note)
     except Exception as exc:
         return {"error": str(exc)}
@@ -270,18 +270,18 @@ def handle_rescue(params: dict, **kwargs) -> dict:
         from examples.rescue.problem.rescue_problem_1 import init_state as default_state
         from ipyhop import IPyHOP
 
-        state = _build_state(args["state"]) if args.get("state") else default_state
+        state = _build_state(params["state"]) if params.get("state") else default_state
 
-        if args.get("tasks"):
+        if params.get("tasks"):
             # tuples may contain lists as args (e.g. coords) — convert inner lists to tuples
             tasks = []
-            for t in args["tasks"]:
+            for t in params["tasks"]:
                 args = []
                 for a in t[1:]:
                     args.append(tuple(a) if isinstance(a, list) else a)
                 tasks.append(tuple([t[0]] + args))
         else:
-            task = str(args.get("task", "survey")).strip()
+            task = str(params.get("task", "survey")).strip()
             task_map = {
                 "move":   [("move_task",   "r1", (5, 5))],
                 "survey": [("survey_task", "a1", (2, 2))],
@@ -292,7 +292,7 @@ def handle_rescue(params: dict, **kwargs) -> dict:
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','survey')}")
+        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','survey')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
         return {"error": str(exc)}
@@ -320,19 +320,19 @@ def handle_robosub(params: dict, **kwargs) -> dict:
         )
         from ipyhop import IPyHOP
 
-        state = _build_state(args["state"]) if args.get("state") else default_state
+        state = _build_state(params["state"]) if params.get("state") else default_state
 
-        if args.get("tasks"):
-            tasks = [tuple(t) for t in args["tasks"]]
+        if params.get("tasks"):
+            tasks = [tuple(t) for t in params["tasks"]]
         else:
-            task = str(args.get("task", "full")).strip()
+            task = str(params.get("task", "full")).strip()
             if task not in ("full", "staged"):
                 return {"error": "'task' must be 'full' or 'staged'"}
             tasks = task_list_1 if task == "full" else task_list_2
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','full')}")
+        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','full')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
         return {"error": str(exc)}
@@ -358,12 +358,12 @@ def handle_healthcare(params: dict, **kwargs) -> dict:
         from examples.healthcare_scheduling.task_based import healthcare_problem as prob
         from ipyhop import IPyHOP
 
-        state = _build_state(args["state"]) if args.get("state") else prob.init_state
+        state = _build_state(params["state"]) if params.get("state") else prob.init_state
 
-        if args.get("tasks"):
-            tasks = [tuple(t) for t in args["tasks"]]
+        if params.get("tasks"):
+            tasks = [tuple(t) for t in params["tasks"]]
         else:
-            task = str(args.get("task", "single")).strip()
+            task = str(params.get("task", "single")).strip()
             task_map = {
                 "single":      "task_list_1",
                 "two":         "task_list_2",
@@ -375,7 +375,7 @@ def handle_healthcare(params: dict, **kwargs) -> dict:
 
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
-        note = args.get("note") or ("custom" if args.get("state") or args.get("tasks") else f"task={args.get('task','single')}")
+        note = params.get("note") or ("custom" if params.get("state") or params.get("tasks") else f"task={params.get('task','single')}")
         return _result(planner, plan, state, note=note)
     except Exception as exc:
         return {"error": str(exc)}
@@ -394,7 +394,7 @@ def handle_temporal_travel(params: dict, **kwargs) -> dict:
               default: [["travel", "alice", "park"]]
       state — optional dict override for the initial state
     """
-    tasks_raw = args.get("tasks") or [["travel", "alice", "park"]]
+    tasks_raw = params.get("tasks") or [["travel", "alice", "park"]]
     if not isinstance(tasks_raw, list):
         return {"error": "tasks must be a list"}
     tasks = []
@@ -407,7 +407,7 @@ def handle_temporal_travel(params: dict, **kwargs) -> dict:
         from examples.temporal_travel.task_based.temporal_travel_domain import actions, methods
         from examples.temporal_travel.task_based.temporal_travel_problem import init_state as default_state
         from ipyhop import IPyHOP
-        state = _build_state(args["state"]) if args.get("state") else default_state
+        state = _build_state(params["state"]) if params.get("state") else default_state
         planner = IPyHOP(methods, actions)
         plan = planner.plan(state, tasks, verbose=0)
         return _result(planner, plan, state)
