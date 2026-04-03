@@ -7,7 +7,7 @@ This is an old file. Kept here only for future reference. Do not use this.
 # ******************************************    Libraries to be imported    ****************************************** #
 from typing import List, Tuple, Union
 
-from networkx import DiGraph
+from ipyhop.graph_utils import DiGraph
 
 
 # ****************************************        Function Declaration        **************************************** #

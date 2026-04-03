@@ -8,8 +8,7 @@ from copy import deepcopy
 from itertools import count
 from typing import List, Optional, Tuple, Union
 
-from networkx import DiGraph, descendants, dfs_preorder_nodes, is_tree
-
+from ipyhop.graph_utils import DiGraph, descendants, dfs_preorder_nodes, is_tree
 from ipyhop.actions import Actions
 from ipyhop.capabilities import EntityCapabilities
 from ipyhop.methods import Methods

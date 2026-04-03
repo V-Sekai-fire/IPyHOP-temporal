@@ -5,8 +5,7 @@ File Description: File used for definition of monte-carlo plan executor
 
 # ******************************************    Libraries to be imported    ****************************************** #
 from typing import List, Tuple, Union
-
-import numpy as np
+import random
 
 from ipyhop.actions import Actions
 from ipyhop.state import State
@@ -17,7 +16,7 @@ class MonteCarloExecutor:
     def __init__(self, actions: Actions, seed: int = 10):
         self.actions = actions
         self.exec_list = None
-        np.random.seed(seed)
+        random.seed(seed)
 
     # ******************************        Class Method Declaration        ****************************************** #
     def execute(self, state: State, plan: List[str], actions: Union[Actions, None] = None) -> List[Tuple]:
@@ -29,7 +28,8 @@ class MonteCarloExecutor:
             act_params = act_inst[1:]
             act_func = self.actions.action_dict[act_name]
             act_prob = self.actions.action_prob[act_name]
-            result = np.random.choice(len(act_prob), 1, p=act_prob)[0]
+            # Use stdlib random.choices for weighted selection (like np.random.choice)
+            result = random.choices(range(len(act_prob)), weights=act_prob, k=1)[0]
             result_state = None
             if result == 0:
                 result_state = act_func(state_copy.copy(), *act_params)
