@@ -10,11 +10,7 @@ Derived from:
     Copyright (c) 2021, University of Maryland
 """
 
-try:
-    from ipyhop.mc_executor import MonteCarloExecutor
-except ImportError:
-    # MonteCarloExecutor requires numpy, make it optional
-    MonteCarloExecutor = None
+from ipyhop.mc_executor import MonteCarloExecutor
 
 from ipyhop.actions import Actions
 from ipyhop.capabilities import EntityCapabilities
